@@ -12,20 +12,36 @@ html, body {
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #090c10;
+  background: #0a0d12;
   color: #e6edf3;
   min-width: 1240px;
+  min-height: 100vh;
+  padding: 12px;
 }
 
 .mono {
   font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
+/* Desktop window frame */
+.app-frame {
+  min-width: 1240px;
+  min-height: calc(100vh - 24px);
+  background: #090c10;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+
 /* App shell */
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
   background: #090c10;
 }
 
@@ -229,7 +245,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   background: #0d1117;
-  min-height: 200px;
+  min-height: 0;
 }
 
 .requests-scroll {
@@ -241,6 +257,7 @@ body {
   display: grid;
   grid-template-columns: 44px 64px 96px 130px 1fr 90px 70px 56px;
   gap: 0;
+  align-items: center;
   color: #8b949e;
   font-size: 10px;
   padding: 6px 12px;
@@ -260,11 +277,16 @@ body {
   display: grid;
   grid-template-columns: 44px 64px 96px 130px 1fr 90px 70px 56px;
   gap: 0;
+  align-items: center;
   font-size: 11px;
   padding: 6px 12px;
   cursor: pointer;
   border-bottom: 1px solid #12161c;
   font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+.request-row > .col-right {
+  text-align: right;
 }
 
 .request-row:hover {
