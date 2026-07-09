@@ -7,7 +7,6 @@ on rendered text (rich Console(record=True) or the plain-string helpers).
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -15,9 +14,6 @@ from rich.table import Table
 from rich.text import Text
 
 from .data import Health, RequestRow, Summary
-
-if TYPE_CHECKING:
-    pass
 
 
 def fmt_cost(c: float | None) -> str:
@@ -66,9 +62,6 @@ def row_style(row: RequestRow) -> str:
 
 
 def _model_arrow(row: RequestRow) -> str:
-    req = short(row.requested_model, 18) if row.requested_model else "?"
-    routed = short(row.routed_model, 22) if row.routed_model else "?"
-    # Prefer short aliases for common prefixes in the arrow display
     req_short = _short_model(row.requested_model)
     routed_short = row.routed_model or "?"
     return f"{req_short}→{routed_short}"
@@ -124,7 +117,16 @@ def detail_text(row: RequestRow) -> str:
 def stats_text(summary: Summary, days: int) -> str:
     """Plain-text version of the summary for the `stats` subcommand
     (renders the same tables via a non-live rich Console)."""
-    console = Console(record=True, width=100, force_terminal=False, soft_wrap=True)
+    from io import StringIO
+
+    # file=StringIO so recording does not also spill to real stdout.
+    console = Console(
+        file=StringIO(),
+        record=True,
+        width=100,
+        force_terminal=False,
+        soft_wrap=True,
+    )
     # Empty window: show $0.0000 rather than '?' (edge case §6).
     cost_display = (
         fmt_cost(0.0)
@@ -206,9 +208,14 @@ def tail_table(rows: list[RequestRow], max_rows: int) -> Table:
 
 def summary_panels(summary: Summary, days: int) -> Group:
     """Two side-by-side tables ('by model', 'by rule') plus a totals line."""
+    cost_display = (
+        fmt_cost(0.0)
+        if summary.total_calls == 0 and summary.total_cost is None
+        else fmt_cost(summary.total_cost)
+    )
     totals = Text(
         f"  last {days} day{'s' if days != 1 else ''}        "
-        f"calls: {summary.total_calls}   cost: {fmt_cost(summary.total_cost)}   "
+        f"calls: {summary.total_calls}   cost: {cost_display}   "
         f"escalations: {summary.escalation_count}   errors: {summary.error_count}"
     )
 
