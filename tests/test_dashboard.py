@@ -276,3 +276,143 @@ def test_load_ladder(tmp_path):
         "claude-fable-5",
     ]
     assert load_ladder(str(tmp_path / "missing.yaml")) == []
+
+
+# --- render layer ---
+
+
+def test_fmt_helpers():
+    from conductor.dashboard.render import (
+        fmt_cost,
+        fmt_latency,
+        fmt_tokens,
+        short,
+    )
+
+    assert fmt_cost(None) == "?"
+    assert fmt_cost(0.01234) == "$0.0123"
+    assert fmt_tokens(None) == "?"
+    assert fmt_latency(1922) == "1.9s"
+    assert fmt_latency(288) == "288ms"
+    assert short("abcdef", 4) == "abc…"
+
+
+def test_tail_table_contains_rows_and_marker(seeded_db):
+    from rich.console import Console
+
+    from conductor.dashboard.data import fetch_recent_rows
+    from conductor.dashboard.render import tail_table
+
+    rows = fetch_recent_rows(str(seeded_db), n=10)
+    table = tail_table(rows, max_rows=10)
+    # force_terminal=False so Console.width is honored (TTY path clamps to 80).
+    console = Console(record=True, width=160, force_terminal=False)
+    console.print(table)
+    text = console.export_text()
+    assert "4" in text  # escalated row id
+    assert "claude-cli" in text or "claude-cli/1.2" in text
+    assert "⤴" in text
+    assert "?" in text  # unpriced cost
+
+
+def test_row_style(seeded_db):
+    from conductor.dashboard.data import fetch_row
+    from conductor.dashboard.render import row_style
+
+    escalated = fetch_row(str(seeded_db), 4)
+    assert row_style(escalated) == "yellow"
+
+    err = fetch_row(str(seeded_db), 6)
+    assert row_style(err) == "red"
+
+    from conductor.dashboard.data import RequestRow
+
+    null_status = RequestRow(
+        id=99,
+        ts=0.0,
+        harness=None,
+        tag=None,
+        rule="default",
+        requested_model=None,
+        routed_model=None,
+        input_tokens=None,
+        output_tokens=None,
+        cost_usd=None,
+        latency_ms=None,
+        stream=None,
+        status=None,
+        est_input_tokens=None,
+    )
+    assert row_style(null_status) == "red"
+
+    ok = fetch_row(str(seeded_db), 2)
+    assert row_style(ok) == ""
+
+
+def test_detail_text(seeded_db):
+    from conductor.dashboard.data import RequestRow, fetch_row
+    from conductor.dashboard.render import detail_text
+
+    row = fetch_row(str(seeded_db), 4)
+    text = detail_text(row)
+    assert "request #4" in text
+    assert "time" in text
+    assert "harness" in text
+    assert "tag" in text
+    assert "rule" in text
+    assert "escalated:truncated" in text
+    assert "escalation retry" in text
+    assert "requested model" in text
+    assert "routed model" in text
+    assert "stream" in text
+    assert "status" in text
+    assert "latency" in text
+    assert "tokens" in text
+    assert "cost" in text
+
+    nullish = RequestRow(
+        id=1,
+        ts=time.time(),
+        harness=None,
+        tag=None,
+        rule=None,
+        requested_model=None,
+        routed_model=None,
+        input_tokens=None,
+        output_tokens=None,
+        cost_usd=None,
+        latency_ms=None,
+        stream=None,
+        status=None,
+        est_input_tokens=None,
+    )
+    t2 = detail_text(nullish)
+    assert "—" in t2
+    assert "?" in t2
+
+
+def test_stats_text_empty_db(tmp_path):
+    from conductor.dashboard.data import Summary
+    from conductor.dashboard.render import stats_text
+
+    # empty Summary (no rows)
+    empty = Summary(
+        by_model=[],
+        by_rule=[],
+        total_calls=0,
+        total_cost=None,
+        escalation_count=0,
+        error_count=0,
+    )
+    text = stats_text(empty, days=7)
+    assert "no requests yet" in text
+    assert "by model" in text or "conductor stats" in text
+
+    # also against a real empty ledger
+    db = tmp_path / "empty.db"
+    Ledger(db)
+    from conductor.dashboard.data import fetch_summary
+
+    s = fetch_summary(str(db), since_ts=0)
+    text2 = stats_text(s, days=1)
+    assert "no requests yet" in text2
