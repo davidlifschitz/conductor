@@ -7,7 +7,7 @@ lands in a SQLite ledger; a report command finds routing mistakes after the fact
 ## Run
 
 ```bash
-pip install fastapi uvicorn httpx pyyaml
+pip install fastapi uvicorn httpx pyyaml rich
 export ANTHROPIC_API_KEY=sk-ant-...
 export OPENROUTER_API_KEY=sk-or-...   # optional, for non-Claude models
 uvicorn conductor.proxy:app --port 8484
@@ -58,8 +58,23 @@ guessed.
   with streaming translation, so non-Anthropic harnesses route through the
   same policy and ledger. Tool-call translation not yet covered.
 
+## Dashboard
+
+    pip install rich          # one-time; the proxy itself doesn't need it
+    python -m conductor.dashboard
+
+Full-screen live view: proxy health, spend by model/rule, and a real-time
+tail of every request (escalations highlighted). Keys: q quit, p pause,
+e escalations-only. One-shot variants:
+
+    python -m conductor.dashboard stats --days 7
+    python -m conductor.dashboard tail -n 50 --follow
+    python -m conductor.dashboard show 212
+
+Read-only over conductor.db and GET /health — safe to run anytime, even
+while the proxy is down. Respects CONDUCTOR_HOME like conductor.report.
+
 ## Still open
 
-- **Dashboard**: the ledger schema is stable; any UI can sit on top.
 - Escalation for streaming responses (currently non-streaming only — you
   can't un-stream a weak answer the client already saw).
