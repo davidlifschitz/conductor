@@ -416,3 +416,76 @@ def test_stats_text_empty_db(tmp_path):
     s = fetch_summary(str(db), since_ts=0)
     text2 = stats_text(s, days=1)
     assert "no requests yet" in text2
+
+
+# --- CLI ---
+
+
+def test_parser_defaults():
+    from conductor.dashboard.__main__ import build_parser
+
+    p = build_parser()
+    a = p.parse_args([])
+    assert a.cmd == "live"
+    assert a.interval == 1.0
+    assert a.days == 1
+
+    a2 = p.parse_args(["stats"])
+    assert a2.cmd == "stats"
+    assert a2.days == 7
+
+    a3 = p.parse_args(["show", "5"])
+    assert a3.cmd == "show"
+    assert a3.id == 5
+
+
+def test_main_show_missing_id_exit_code(seeded_db):
+    from conductor.dashboard.__main__ import main
+
+    assert main(["show", "9999", "--db", str(seeded_db)]) == 1
+
+
+def test_main_stats_smoke(seeded_db, capsys):
+    from conductor.dashboard.__main__ import main
+
+    rc = main(["stats", "--db", str(seeded_db)])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "claude-haiku-4-5" in out or "mystery-model" in out
+
+
+# --- live smoke ---
+
+
+def test_live_dashboard_tick(seeded_db, monkeypatch, tmp_path):
+    from rich.console import Console
+
+    from conductor.dashboard.app import LiveDashboard
+    from conductor.dashboard.data import Health
+
+    monkeypatch.setattr(
+        "conductor.dashboard.data.fetch_health",
+        lambda url, timeout=0.8: Health(
+            up=True, default_model="claude-haiku-4-5", error=None
+        ),
+    )
+    policy = tmp_path / "policy.yaml"
+    policy.write_text(
+        "escalation:\n  ladder: [claude-haiku-4-5, claude-sonnet-4-6]\n"
+    )
+
+    dash = LiveDashboard(
+        db_path=str(seeded_db),
+        proxy_url="http://localhost:8484",
+        policy_path=str(policy),
+        interval=1.0,
+        days=1,
+        rows=50,
+    )
+    dash.tick()
+    layout = dash.render()
+    console = Console(record=True, width=160, force_terminal=False)
+    console.print(layout)
+    text = console.export_text()
+    assert text  # rendered something
+    assert dash.after_id > 0
