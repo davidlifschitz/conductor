@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#f0eee9;font-family:'Inter',system-ui,sans-serif}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+
+<section style="padding:40px 44px 60px;border-bottom:1px solid rgba(0,0,0,.08)" id="t2">
+  <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 8px">
+    <a href="#t2" style="font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none">2</a>
+    <span style="font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a">Merged direction + agent launcher</span>
+  </div>
+  <p style="max-width:760px;font:13px/1.6 system-ui,sans-serif;color:rgba(0,0,0,.6);margin:0 0 24px">
+    Combines <a href="#1a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:2px 5px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:4px;text-decoration:none">1a</a>'s literal boxed panels with <a href="#1c" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:2px 5px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:4px;text-decoration:none">1c</a>'s dense KPI strip/nav bar, and reuses <a href="#1d" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:2px 5px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:4px;text-decoration:none">1d</a>'s model-transition treatment as small chips in every row.
+    Adds a fourth <b>Agents</b> tab: pick a coding agent, toggle CLI/App mode, and open a simulated session — a mock terminal or chat window, tagged with which model Conductor actually routed it to.
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+    <div id="2a" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)">
+        <a href="#2a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none">2a</a>
+        Merged dashboard with Agents launcher
+      </div>
+      <div style="width:1240px;height:840px;background:#090c10;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;font-family:'Inter',system-ui,sans-serif;position:relative;isolation:isolate">
+        <!-- nav bar -->
+        <div style="height:46px;flex:none;display:flex;align-items:center;gap:14px;padding:0 20px;background:#0d1117;border-bottom:1px solid #1c2128">
+          <span style="color:#e6edf3;font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace">CONDUCTOR</span>
+          <span style="width:7px;height:7px;border-radius:50%;background:#3fb950;box-shadow:0 0 8px #3fb950"></span>
+          <span style="color:#3fb950;font-size:11px;font-family:'JetBrains Mono',monospace">UP</span>
+          <span style="color:#8b949e;font-size:11px;font-family:'JetBrains Mono',monospace">ladder: {{ health.ladderShort }}</span>
+          <div style="flex:1"></div>
+          <div onclick="{{ opt.m.showLive }}" style="font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;color:{{ opt.m.navLiveColor }};background:{{ opt.m.navLiveBg }}">LIVE</div>
+          <div onclick="{{ opt.m.showStats }}" style="font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;color:{{ opt.m.navStatsColor }};background:{{ opt.m.navStatsBg }}">STATS</div>
+          <div onclick="{{ opt.m.showTail }}" style="font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;color:{{ opt.m.navTailColor }};background:{{ opt.m.navTailBg }}">TAIL</div>
+          <div onclick="{{ opt.m.showAgents }}" style="font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;color:{{ opt.m.navAgentsColor }};background:{{ opt.m.navAgentsBg }}">AGENTS</div>
+        </div>
+
+        <!-- KPI strip -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1c2128;flex:none">
+          <div style="background:#0d1117;padding:12px 18px"><div style="color:#8b949e;font-size:10px;letter-spacing:.05em">TOTAL CALLS</div><div style="color:#e6edf3;font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ totals.calls }}</div></div>
+          <div style="background:#0d1117;padding:12px 18px"><div style="color:#8b949e;font-size:10px;letter-spacing:.05em">SPEND</div><div style="color:#58a6ff;font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;text-shadow:0 0 12px rgba(88,166,255,.5)">{{ totals.costDisplay }}</div></div>
+          <div style="background:#0d1117;padding:12px 18px"><div style="color:#8b949e;font-size:10px;letter-spacing:.05em">ESCALATIONS</div><div style="color:#e3b341;font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ totals.escalations }}</div></div>
+          <div style="background:#0d1117;padding:12px 18px"><div style="color:#8b949e;font-size:10px;letter-spacing:.05em">ERRORS</div><div style="color:#f85149;font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ totals.errors }}</div></div>
+        </div>
+
+        <!-- LIVE -->
+        <sc-if value="{{ opt.m.isLive }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;overflow:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px;min-height:0">
+          <div style="display:flex;gap:12px">
+            <div style="flex:1;border:1px solid #1c2128;border-radius:6px;padding:10px 12px;background:#0d1117">
+              <div style="color:#58a6ff;font-size:10px;margin-bottom:8px;font-family:'JetBrains Mono',monospace">┌─ by model ─</div>
+              <sc-for list="{{ byModel }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;padding:3px 0;font-family:'JetBrains Mono',monospace"><span>{{ m.model }}</span><span style="color:#8b949e">{{ m.calls }} · {{ m.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+            <div style="flex:1;border:1px solid #1c2128;border-radius:6px;padding:10px 12px;background:#0d1117">
+              <div style="color:#58a6ff;font-size:10px;margin-bottom:8px;font-family:'JetBrains Mono',monospace">┌─ by rule ─</div>
+              <sc-for list="{{ byRule }}" as="r" hint-placeholder-count="6">
+                <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;padding:3px 0;font-family:'JetBrains Mono',monospace"><span>{{ r.rule }}</span><span style="color:#8b949e">{{ r.calls }} · {{ r.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="border:1px solid #1c2128;border-radius:6px;flex:1;display:flex;flex-direction:column;overflow:hidden;background:#0d1117;min-height:0">
+            <div style="color:#58a6ff;font-size:10px;padding:8px 12px;border-bottom:1px solid #1c2128;font-family:'JetBrains Mono',monospace">┌─ requests (newest last) ─</div>
+            <div style="overflow:auto;flex:1">
+              <div style="display:grid;grid-template-columns:44px 64px 96px 130px 1fr 90px 70px 56px;gap:0;color:#8b949e;font-size:10px;padding:6px 12px;border-bottom:1px solid #1c2128;position:sticky;top:0;background:#0d1117;font-family:'JetBrains Mono',monospace">
+                <span>id</span><span>time</span><span>harness</span><span>rule</span><span>req → routed</span><span style="text-align:right">tok</span><span style="text-align:right">cost</span><span style="text-align:right">ms</span>
+              </div>
+              <sc-for list="{{ rows }}" as="row" hint-placeholder-count="10">
+                <div onclick="{{ row.openDetailM }}" style="display:grid;grid-template-columns:44px 64px 96px 130px 1fr 90px 70px 56px;gap:0;font-size:11px;padding:6px 12px;cursor:pointer;border-bottom:1px solid #12161c;font-family:'JetBrains Mono',monospace">
+                  <span style="color:{{ row.rowColor }}">{{ row.escalatedMark }}{{ row.id }}</span><span style="color:{{ row.rowColor }}">{{ row.time }}</span><span style="color:{{ row.rowColor }}">{{ row.harness }}</span><span style="color:{{ row.rowColor }}">{{ row.rule }}</span>
+                  <span style="display:flex;align-items:center;gap:5px;min-width:0">
+                    <span style="color:#8b949e;background:#161b22;border:1px solid #21262d;border-radius:4px;padding:1px 6px;font-size:10px">{{ row.reqShort }}</span>
+                    <span style="color:#484f58">➜</span>
+                    <span style="color:#c9e8ff;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.35);border-radius:4px;padding:1px 6px;font-size:10px">{{ row.routed }}</span>
+                  </span>
+                  <span style="text-align:right;color:{{ row.rowColor }}">{{ row.tokDisplay }}</span><span style="text-align:right;color:{{ row.rowColor }}">{{ row.costDisplay }}</span><span style="text-align:right;color:{{ row.rowColor }}">{{ row.latencyDisplay }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- STATS -->
+        <sc-if value="{{ opt.m.isStats }}">
+        <div style="flex:1;overflow:auto;padding:14px 18px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:8px">
+            <div onclick="{{ opt.m.setRange24h }}" style="padding:5px 14px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.m.range24hColor }};background:{{ opt.m.range24hBg }}">24H</div>
+            <div onclick="{{ opt.m.setRange7d }}" style="padding:5px 14px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.m.range7dColor }};background:{{ opt.m.range7dBg }}">7D</div>
+            <div onclick="{{ opt.m.setRange30d }}" style="padding:5px 14px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.m.range30dColor }};background:{{ opt.m.range30dBg }}">30D</div>
+          </div>
+          <div style="background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:16px">
+            <div style="color:#8b949e;font-size:10px;letter-spacing:.05em;margin-bottom:10px;font-family:'JetBrains Mono',monospace">SPEND TREND — {{ opt.m.range }}</div>
+            <svg width="100%" height="100" viewBox="0 0 700 100" preserveAspectRatio="none">
+              <polyline points="0,80 70,70 140,74 210,42 280,52 350,15 420,32 490,12 560,24 630,6 700,12" fill="none" stroke="#58a6ff" stroke-width="2.5"></polyline>
+              <polyline points="0,80 70,70 140,74 210,42 280,52 350,15 420,32 490,12 560,24 630,6 700,12 700,100 0,100" fill="rgba(88,166,255,.08)" stroke="none"></polyline>
+            </svg>
+          </div>
+          <div style="display:flex;gap:14px">
+            <div style="flex:1;background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:14px">
+              <div style="color:#8b949e;font-size:10px;letter-spacing:.05em;margin-bottom:10px;font-family:'JetBrains Mono',monospace">BY MODEL</div>
+              <sc-for list="{{ byModel }}" as="m" hint-placeholder-count="4">
+                <div style="display:grid;grid-template-columns:1fr 50px 90px 80px;color:#c9d1d9;font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 0;align-items:center">
+                  <span>{{ m.model }}</span><span style="text-align:right">{{ m.calls }}</span>
+                  <span style="justify-self:end;width:80px;height:6px;background:#1c2128;border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:{{ m.barPct }}%;background:#58a6ff;box-shadow:0 0 6px rgba(88,166,255,.6)"></span></span>
+                  <span style="text-align:right">{{ m.costDisplay }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="flex:1;background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:14px">
+              <div style="color:#8b949e;font-size:10px;letter-spacing:.05em;margin-bottom:10px;font-family:'JetBrains Mono',monospace">BY RULE</div>
+              <sc-for list="{{ byRule }}" as="r" hint-placeholder-count="6">
+                <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 0"><span>{{ r.rule }}</span><span>{{ r.calls }} · {{ r.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- TAIL -->
+        <sc-if value="{{ opt.m.isTail }}">
+        <div style="flex:1;overflow:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px">
+            <select onchange="{{ opt.m.onModelFilterChange }}" value="{{ opt.m.modelFilter }}" style="background:#0d1117;color:#c9d1d9;border:1px solid #1c2128;border-radius:6px;font-size:11px;padding:6px 10px;font-family:'JetBrains Mono',monospace">
+              <sc-for list="{{ models }}" as="mo" hint-placeholder-count="4"><option value="{{ mo }}">{{ mo }}</option></sc-for>
+            </select>
+            <select onchange="{{ opt.m.onRuleFilterChange }}" value="{{ opt.m.ruleFilter }}" style="background:#0d1117;color:#c9d1d9;border:1px solid #1c2128;border-radius:6px;font-size:11px;padding:6px 10px;font-family:'JetBrains Mono',monospace">
+              <sc-for list="{{ rules }}" as="ru" hint-placeholder-count="4"><option value="{{ ru }}">{{ ru }}</option></sc-for>
+            </select>
+          </div>
+          <sc-for list="{{ opt.m.filteredRows }}" as="row" hint-placeholder-count="10">
+            <div onclick="{{ row.openDetailM }}" style="display:flex;align-items:center;gap:16px;font-size:11px;cursor:pointer;padding:6px 4px;border-bottom:1px solid #171b22;font-family:'JetBrains Mono',monospace">
+              <span style="color:{{ row.rowColor }}">{{ row.escalatedMark }}{{ row.id }}</span><span style="color:{{ row.rowColor }}">{{ row.time }}</span><span style="color:{{ row.rowColor }}">{{ row.harness }}</span><span style="color:{{ row.rowColor }}">{{ row.rule }}</span>
+              <span style="display:flex;align-items:center;gap:5px">
+                <span style="color:#8b949e;background:#161b22;border:1px solid #21262d;border-radius:4px;padding:1px 6px;font-size:10px">{{ row.reqShort }}</span>
+                <span style="color:#484f58">➜</span>
+                <span style="color:#c9e8ff;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.35);border-radius:4px;padding:1px 6px;font-size:10px">{{ row.routed }}</span>
+              </span>
+              <span style="color:{{ row.rowColor }}">{{ row.costDisplay }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- AGENTS -->
+        <sc-if value="{{ opt.m.isAgents }}">
+        <div style="flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+          <div style="color:#8b949e;font-size:11px;font-family:'JetBrains Mono',monospace">every session below is proxied through conductor — same policy, same ledger, whichever agent you launch</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <sc-for list="{{ agents }}" as="agent" hint-placeholder-count="7">
+              <div style="background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:34px;height:34px;border-radius:8px;background:{{ agent.accent }};display:flex;align-items:center;justify-content:center;color:#0a0d12;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ agent.avatar }}</div>
+                  <div style="color:#e6edf3;font-size:13px;font-weight:600">{{ agent.name }}</div>
+                </div>
+                <div style="display:flex;background:#12161d;border:1px solid #1c2128;border-radius:6px;padding:2px">
+                  <div onclick="{{ agent.setCli }}" style="flex:1;text-align:center;padding:6px 0;border-radius:5px;font-size:10.5px;cursor:pointer;color:{{ agent.cliColor }};background:{{ agent.cliBg }};font-family:'JetBrains Mono',monospace">CLI</div>
+                  <div onclick="{{ agent.setApp }}" style="flex:1;text-align:center;padding:6px 0;border-radius:5px;font-size:10.5px;cursor:pointer;color:{{ agent.appColor }};background:{{ agent.appBg }};font-family:'JetBrains Mono',monospace">APP</div>
+                </div>
+                <div style="color:#6e7681;font-size:10px;font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ agent.targetLine }}">{{ agent.targetLine }}</div>
+                <div onclick="{{ agent.openTarget }}" style="text-align:center;padding:8px 0;border-radius:6px;font-size:11.5px;cursor:pointer;background:{{ agent.accent }};color:#0a0d12;font-weight:600">{{ agent.openLabel }}</div>
+                <div onclick="{{ agent.launch }}" style="text-align:center;padding:7px 0;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid #1c2128;color:#8b949e">Preview session</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="color:#8b949e;font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:6px">plugins &amp; integrations (MCP) — shared context every agent above can call</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <sc-for list="{{ integrations }}" as="ig" hint-placeholder-count="4">
+              <div style="background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:30px;height:30px;border-radius:7px;background:{{ ig.accent }};display:flex;align-items:center;justify-content:center;color:#0a0d12;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ ig.avatar }}</div>
+                  <div style="color:#e6edf3;font-size:12.5px;font-weight:600">{{ ig.name }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="width:6px;height:6px;border-radius:50%;background:{{ ig.statusColor }}"></span>
+                  <span style="color:{{ ig.statusColor }};font-size:10.5px;font-family:'JetBrains Mono',monospace">{{ ig.statusText }}</span>
+                </div>
+                <div onclick="{{ ig.toggle }}" style="text-align:center;padding:6px 0;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid #1c2128;color:#c9d1d9">{{ ig.actionLabel }}</div>
+              </div>
+            </sc-for>
+            <sc-for list="{{ customMcps }}" as="mcp" hint-placeholder-count="0">
+              <div style="background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:30px;height:30px;border-radius:7px;background:#30363d;display:flex;align-items:center;justify-content:center;color:#c9d1d9;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace">MC</div>
+                  <div style="color:#e6edf3;font-size:12.5px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis">{{ mcp.name }}</div>
+                </div>
+                <div style="color:#6e7681;font-size:10px;font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ mcp.url }}</div>
+                <div onclick="{{ mcp.remove }}" style="text-align:center;padding:6px 0;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid #1c2128;color:#f85149">Remove</div>
+              </div>
+            </sc-for>
+            <div onclick="{{ mcpForm.openForm }}" style="border:1px dashed #2a323c;border-radius:8px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:#6e7681;min-height:98px">
+              <span style="font-size:20px;line-height:1">+</span>
+              <span style="font-size:11px;font-family:'JetBrains Mono',monospace">Add custom MCP</span>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ADD CUSTOM MCP OVERLAY -->
+        <sc-if value="{{ mcpForm.open }}">
+          <div onclick="{{ mcpForm.close }}" style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:20">
+            <div onclick="{{ mcpForm.stop }}" style="width:360px;background:#0d1117;border:1px solid #2a323c;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#e6edf3;font-size:13px;font-weight:700">Add custom MCP</span><span onclick="{{ mcpForm.close }}" style="cursor:pointer;color:#8b949e">✕</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <label style="color:#8b949e;font-size:10.5px;font-family:'JetBrains Mono',monospace">name</label>
+                <input value="{{ mcpForm.nameVal }}" onchange="{{ mcpForm.onNameChange }}" placeholder="e.g. Notion" style="background:#12161d;border:1px solid #1c2128;border-radius:6px;padding:8px 10px;color:#e6edf3;font-size:12px;font-family:'JetBrains Mono',monospace" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <label style="color:#8b949e;font-size:10.5px;font-family:'JetBrains Mono',monospace">server url</label>
+                <input value="{{ mcpForm.urlVal }}" onchange="{{ mcpForm.onUrlChange }}" placeholder="https://mcp.example.com/sse" style="background:#12161d;border:1px solid #1c2128;border-radius:6px;padding:8px 10px;color:#e6edf3;font-size:12px;font-family:'JetBrains Mono',monospace" />
+              </div>
+              <div onclick="{{ mcpForm.submit }}" style="text-align:center;padding:9px 0;border-radius:6px;font-size:12px;cursor:pointer;background:#58a6ff;color:#0a0d12;font-weight:600;margin-top:4px">Add MCP</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ROW DETAIL OVERLAY -->
+        <sc-if value="{{ opt.m.detailOpen }}">
+          <div onclick="{{ opt.m.closeDetail }}" style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center">
+            <div onclick="{{ opt.m.stop }}" style="width:400px;background:#0d1117;border:1px solid #2a323c;border-radius:10px;padding:20px;color:#c9d1d9;font-size:11.5px;line-height:2;font-family:'JetBrains Mono',monospace;box-shadow:0 0 40px rgba(88,166,255,.15)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#e6edf3;font-weight:700;font-size:13px">REQUEST #{{ opt.m.detailRow.id }}</span><span onclick="{{ opt.m.closeDetail }}" style="cursor:pointer;color:#8b949e">✕</span></div>
+              <div>time&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.m.detailRow.time }}</div>
+              <div>harness&nbsp;{{ opt.m.detailRow.harness }}</div>
+              <div>rule&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.m.detailRow.rule }}</div>
+              <div>req→routed&nbsp;{{ opt.m.detailRow.requested }} → {{ opt.m.detailRow.routed }}</div>
+              <div>stream&nbsp;&nbsp;{{ opt.m.detailRow.streamText }}</div>
+              <div>status&nbsp;&nbsp;{{ opt.m.detailRow.status }}</div>
+              <div>latency&nbsp;{{ opt.m.detailRow.latencyDisplay }}</div>
+              <div>tokens&nbsp;&nbsp;{{ opt.m.detailRow.tokDisplay }}</div>
+              <div>cost&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.m.detailRow.costDisplay }}</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- AGENT SESSION OVERLAY -->
+        <sc-if value="{{ session.open }}">
+          <div onclick="{{ session.close }}" style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:10">
+            <div onclick="{{ session.stop }}" style="width:820px;height:560px;background:#0a0d12;border:1px solid #2a323c;border-radius:10px;box-shadow:0 0 50px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden">
+              <div style="height:40px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:#0d1117;border-bottom:1px solid #1c2128">
+                <div style="width:22px;height:22px;border-radius:6px;background:{{ session.agent.accent }};display:flex;align-items:center;justify-content:center;color:#0a0d12;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ session.agent.avatar }}</div>
+                <span style="color:#e6edf3;font-size:12px;font-weight:600">{{ session.agent.name }}</span>
+                <sc-if value="{{ session.isCli }}"><span style="color:#8b949e;font-size:11px;font-family:'JetBrains Mono',monospace">— CLI session</span></sc-if>
+                <sc-if value="{{ session.isApp }}"><span style="color:#8b949e;font-size:11px;font-family:'JetBrains Mono',monospace">— App session</span></sc-if>
+                <span style="color:#3fb950;font-size:10.5px;font-family:'JetBrains Mono',monospace;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);border-radius:4px;padding:2px 7px">routed via conductor → claude-haiku-4-5</span>
+                <div style="flex:1"></div>
+                <span onclick="{{ session.close }}" style="cursor:pointer;color:#8b949e;font-size:13px">✕</span>
+              </div>
+
+              <sc-if value="{{ session.isCli }}">
+              <div style="flex:1;padding:16px 18px;color:#c9d1d9;font-size:12.5px;font-family:'JetBrains Mono',monospace;line-height:1.8;overflow:auto;background:#080a0d">
+                <div style="color:#8b949e">$ export ANTHROPIC_BASE_URL=http://localhost:8484</div>
+                <div style="color:#8b949e">$ {{ session.agent.cliCmd }}</div>
+                <div style="color:#3fb950">▐ routed via conductor → claude-haiku-4-5 (rule: default)</div>
+                <div>&nbsp;</div>
+                <div>Reading src/payment_service.py…</div>
+                <div>Found the bug: currency rounding in calculate_total(). Applying fix…</div>
+                <div style="color:#58a6ff">+ round(amount * (1 + tax_rate), 2)</div>
+                <div style="color:#f85149">- round(amount + tax_rate, 2)</div>
+                <div style="color:#3fb950">✓ tests passing (14/14)</div>
+                <div style="margin-top:10px;display:flex;align-items:center;gap:6px"><span>›</span><span style="display:inline-block;width:7px;height:14px;background:#c9d1d9;animation:pulse 1s infinite"></span></div>
+              </div>
+              </sc-if>
+
+              <sc-if value="{{ session.isApp }}">
+              <div style="flex:1;display:flex;flex-direction:column;background:#0a0d12;min-height:0">
+                <div style="flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+                  <div style="align-self:flex-end;max-width:70%;background:#1f6feb;color:#fff;border-radius:10px 10px 2px 10px;padding:10px 14px;font-size:12.5px;line-height:1.6">Fix the failing test in payment_service.py</div>
+                  <div style="align-self:flex-start;max-width:75%;display:flex;flex-direction:column;gap:8px">
+                    <span style="color:#3fb950;font-size:10px;font-family:'JetBrains Mono',monospace;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);border-radius:4px;padding:2px 7px;align-self:flex-start">planning-language → claude-sonnet-4-6</span>
+                    <div style="background:#161b22;color:#c9d1d9;border-radius:2px 10px 10px 10px;padding:12px 14px;font-size:12.5px;line-height:1.7">
+                      Found it — <code style="font-family:'JetBrains Mono',monospace;color:#e6edf3">calculate_total()</code> was rounding before applying tax instead of after.
+                      <div style="margin-top:8px;background:#0d1117;border:1px solid #1c2128;border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:11.5px">
+                        <div style="color:#58a6ff">+ round(amount * (1 + tax_rate), 2)</div>
+                        <div style="color:#f85149">- round(amount + tax_rate, 2)</div>
+                      </div>
+                      <div style="margin-top:8px;color:#3fb950">All 14 tests pass.</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="flex:none;padding:14px 20px;border-top:1px solid #1c2128;display:flex;gap:10px">
+                  <div style="flex:1;background:#12161d;border:1px solid #1c2128;border-radius:8px;padding:10px 14px;color:#6e7681;font-size:12px">Message {{ session.agent.name }}…</div>
+                  <div style="background:{{ session.agent.accent }};color:#0a0d12;border-radius:8px;padding:10px 16px;font-size:12px;font-weight:600">Send</div>
+                </div>
+              </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  <p style="max-width:760px;font:12px/1.6 system-ui,sans-serif;color:rgba(0,0,0,.5);margin:22px 0 0">
+    Try next: "add a 6th agent card for &lt;name&gt;" · "make the session overlay resizable/full-screen" · "show the escalation retry pair (original + escalated call) linked in the detail view"
+  </p>
+</section>
+
+<section style="padding:40px 44px 60px;border-bottom:1px solid rgba(0,0,0,.08)" id="t1">
+  <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 8px">
+    <a href="#t1" style="font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none">1</a>
+    <span style="font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a">New GUI for Conductor — 4 directions</span>
+  </div>
+  <p style="max-width:760px;font:13px/1.6 system-ui,sans-serif;color:rgba(0,0,0,.6);margin:0 0 24px">
+    Conductor today is a read-only terminal dashboard (rich TUI): a status header, spend-by-model / spend-by-rule
+    panels, and a live request tail — plus one-shot <code style="font-family:ui-monospace,monospace">stats</code>/<code style="font-family:ui-monospace,monospace">tail</code>/<code style="font-family:ui-monospace,monospace">show</code> commands.
+    These four options bring that same data into a proper GUI, all keeping a dark, monospace-leaning "terminal, but polished" feel.
+    Each is a real interactive shell — switch tabs, click a request row for detail, filter by model/rule, flip time ranges.
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+
+    <!-- ============ OPTION 1a — Terminal Panels ============ -->
+    <div id="1a" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)">
+        <a href="#1a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none">1a</a>
+        Terminal Panels — literal box-drawing translation of the TUI
+      </div>
+      <div style="width:1240px;height:800px;background:#0d1117;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;font-family:'JetBrains Mono',ui-monospace,monospace;position:relative">
+        <!-- title bar -->
+        <div style="height:34px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px;background:#161b22;border-bottom:1px solid #21262d">
+          <div style="width:8px;height:8px;border-radius:50%;background:#3fb950"></div>
+          <span style="color:#e6edf3;font-size:12px;font-weight:600">conductor</span>
+          <span style="color:#8b949e;font-size:11px">⏵ proxy UP · default=claude-haiku-4-5</span>
+          <div style="flex:1"></div>
+          <span style="color:#8b949e;font-size:11px">db: conductor.db</span>
+        </div>
+        <!-- tabs -->
+        <div style="height:36px;flex:none;display:flex;align-items:center;gap:2px;padding:0 12px;background:#0d1117;border-bottom:1px solid #21262d">
+          <sc-if value="{{ opt.a.isLive }}"><div style="padding:7px 14px;font-size:11px;color:#e6edf3;background:#161b22;border-radius:6px 6px 0 0;border:1px solid #21262d;border-bottom:none;cursor:pointer" onclick="{{ opt.a.showTail }}">live</div></sc-if>
+          <sc-if value="{{ opt.a.isLiveOff }}"><div style="padding:7px 14px;font-size:11px;color:#8b949e;cursor:pointer" onclick="{{ opt.a.showLive }}">live</div></sc-if>
+          <sc-if value="{{ opt.a.isStats }}"><div style="padding:7px 14px;font-size:11px;color:#e6edf3;background:#161b22;border-radius:6px 6px 0 0;border:1px solid #21262d;border-bottom:none;cursor:pointer" onclick="{{ opt.a.showTail }}">stats</div></sc-if>
+          <sc-if value="{{ opt.a.isStatsOff }}"><div style="padding:7px 14px;font-size:11px;color:#8b949e;cursor:pointer" onclick="{{ opt.a.showStats }}">stats</div></sc-if>
+          <sc-if value="{{ opt.a.isTail }}"><div style="padding:7px 14px;font-size:11px;color:#e6edf3;background:#161b22;border-radius:6px 6px 0 0;border:1px solid #21262d;border-bottom:none;cursor:pointer">tail</div></sc-if>
+          <sc-if value="{{ opt.a.isTailOff }}"><div style="padding:7px 14px;font-size:11px;color:#8b949e;cursor:pointer" onclick="{{ opt.a.showTail }}">tail</div></sc-if>
+          <div style="flex:1"></div>
+          <span style="color:#3fb950;font-size:11px;padding-right:4px">q quit · p pause · e escalations-only</span>
+        </div>
+
+        <!-- LIVE TAB -->
+        <sc-if value="{{ opt.a.isLive }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+          <div style="color:#e6edf3;font-size:11px">last 1 day &nbsp;&nbsp; calls: {{ totals.calls }} &nbsp;&nbsp; cost: {{ totals.costDisplay }} &nbsp;&nbsp; escalations: {{ totals.escalations }} &nbsp;&nbsp; errors: {{ totals.errors }}</div>
+          <div style="display:flex;gap:12px">
+            <div style="flex:1;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+              <div style="color:#58a6ff;font-size:10px;margin-bottom:8px">┌─ by model ─</div>
+              <sc-for list="{{ byModel }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;padding:3px 0"><span>{{ m.model }}</span><span style="color:#8b949e">{{ m.calls }} · {{ m.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+            <div style="flex:1;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+              <div style="color:#58a6ff;font-size:10px;margin-bottom:8px">┌─ by rule ─</div>
+              <sc-for list="{{ byRule }}" as="r" hint-placeholder-count="6">
+                <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;padding:3px 0"><span>{{ r.rule }}</span><span style="color:#8b949e">{{ r.calls }} · {{ r.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="border:1px solid #21262d;border-radius:6px;flex:1;display:flex;flex-direction:column;overflow:hidden">
+            <div style="color:#58a6ff;font-size:10px;padding:8px 12px;border-bottom:1px solid #21262d">┌─ requests (newest last) ─</div>
+            <div style="overflow:auto;flex:1">
+              <div style="display:grid;grid-template-columns:44px 64px 96px 130px 1fr 90px 70px 56px;gap:0;color:#8b949e;font-size:10px;padding:6px 12px;border-bottom:1px solid #21262d;position:sticky;top:0;background:#0d1117">
+                <span>id</span><span>time</span><span>harness</span><span>rule</span><span>req→routed</span><span style="text-align:right">tok</span><span style="text-align:right">cost</span><span style="text-align:right">ms</span>
+              </div>
+              <sc-for list="{{ rows }}" as="row" hint-placeholder-count="10">
+                <div onclick="{{ row.openDetailA }}" style="display:grid;grid-template-columns:44px 64px 96px 130px 1fr 90px 70px 56px;gap:0;font-size:11px;padding:5px 12px;cursor:pointer;color:{{ row.rowColor }};border-bottom:1px solid #161b22">
+                  <span>{{ row.escalatedMark }}{{ row.id }}</span><span>{{ row.time }}</span><span>{{ row.harness }}</span><span>{{ row.rule }}</span><span>{{ row.modelArrow }}</span><span style="text-align:right">{{ row.tokDisplay }}</span><span style="text-align:right">{{ row.costDisplay }}</span><span style="text-align:right">{{ row.latencyDisplay }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- STATS TAB -->
+        <sc-if value="{{ opt.a.isStats }}">
+        <div style="flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:8px">
+            <div onclick="{{ opt.a.setRange24h }}" style="padding:5px 12px;border:1px solid #21262d;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.a.range24hColor }};background:{{ opt.a.range24hBg }}">24h</div>
+            <div onclick="{{ opt.a.setRange7d }}" style="padding:5px 12px;border:1px solid #21262d;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.a.range7dColor }};background:{{ opt.a.range7dBg }}">7d</div>
+            <div onclick="{{ opt.a.setRange30d }}" style="padding:5px 12px;border:1px solid #21262d;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.a.range30dColor }};background:{{ opt.a.range30dBg }}">30d</div>
+          </div>
+          <div style="color:#e6edf3;font-size:12px">== conductor stats: last {{ opt.a.range }} ==</div>
+          <div style="color:#c9d1d9;font-size:11px">calls: {{ totals.calls }} &nbsp; cost: {{ totals.costDisplay }} &nbsp; escalations: {{ totals.escalations }} &nbsp; errors: {{ totals.errors }}</div>
+          <div style="border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="color:#58a6ff;font-size:10px;margin-bottom:8px">by model</div>
+            <sc-for list="{{ byModel }}" as="m" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:1fr 60px 90px 100px 70px;color:#c9d1d9;font-size:11px;padding:4px 0;align-items:center">
+                <span>{{ m.model }}</span><span style="text-align:right">{{ m.calls }}</span>
+                <span style="justify-self:end;width:80px;height:6px;background:#21262d;border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:{{ m.barPct }}%;background:#58a6ff"></span></span>
+                <span style="text-align:right">{{ m.costDisplay }}</span><span style="text-align:right;color:#8b949e">{{ m.unpriced }} unpr</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="color:#58a6ff;font-size:10px;margin-bottom:8px">by rule</div>
+            <sc-for list="{{ byRule }}" as="r" hint-placeholder-count="6">
+              <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;padding:4px 0"><span>{{ r.rule }}</span><span>{{ r.calls }} · {{ r.costDisplay }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- TAIL TAB (plain log) -->
+        <sc-if value="{{ opt.a.isTail }}">
+        <div style="flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px">
+            <select onchange="{{ opt.a.onModelFilterChange }}" value="{{ opt.a.modelFilter }}" style="background:#161b22;color:#c9d1d9;border:1px solid #21262d;border-radius:5px;font-size:11px;padding:5px 8px;font-family:inherit">
+              <sc-for list="{{ models }}" as="mo" hint-placeholder-count="4"><option value="{{ mo }}">{{ mo }}</option></sc-for>
+            </select>
+            <select onchange="{{ opt.a.onRuleFilterChange }}" value="{{ opt.a.ruleFilter }}" style="background:#161b22;color:#c9d1d9;border:1px solid #21262d;border-radius:5px;font-size:11px;padding:5px 8px;font-family:inherit">
+              <sc-for list="{{ rules }}" as="ru" hint-placeholder-count="4"><option value="{{ ru }}">{{ ru }}</option></sc-for>
+            </select>
+          </div>
+          <div style="color:#8b949e;font-size:10px">{{ 'id'.padEnd }}</div>
+          <sc-for list="{{ opt.a.filteredRows }}" as="row" hint-placeholder-count="10">
+            <div onclick="{{ row.openDetailA }}" style="display:flex;gap:14px;font-size:11px;color:{{ row.rowColor }};cursor:pointer;padding:3px 0;border-bottom:1px solid #161b22">
+              <span>{{ row.escalatedMark }}{{ row.id }}</span><span>{{ row.time }}</span><span>{{ row.harness }}</span><span>{{ row.rule }}</span><span>{{ row.modelArrow }}</span><span>{{ row.tokDisplay }}</span><span>{{ row.costDisplay }}</span><span>{{ row.latencyDisplay }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- DETAIL OVERLAY -->
+        <sc-if value="{{ opt.a.detailOpen }}">
+          <div onclick="{{ opt.a.closeDetail }}" style="position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end">
+            <div onclick="{{ opt.a.stop }}" style="width:100%;background:#0d1117;border-top:1px solid #21262d;padding:16px 20px;color:#c9d1d9;font-size:11px;line-height:1.7;max-height:60%;overflow:auto">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#e6edf3;font-weight:600">request #{{ opt.a.detailRow.id }}</span><span onclick="{{ opt.a.closeDetail }}" style="cursor:pointer;color:#8b949e">close ✕</span></div>
+              <div>time&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.time }}</div>
+              <div>harness&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.harness }}</div>
+              <div>rule&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.rule }}</div>
+              <div>requested model&nbsp;{{ opt.a.detailRow.requested }}</div>
+              <div>routed model&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.routed }}</div>
+              <div>stream&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.streamText }}</div>
+              <div>status&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.status }}</div>
+              <div>latency&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.latencyDisplay }}</div>
+              <div>tokens&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.tokDisplay }}</div>
+              <div>cost&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.a.detailRow.costDisplay }}</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- ============ OPTION 1b — Editor Sidebar ============ -->
+    <div id="1b" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)">
+        <a href="#1b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none">1b</a>
+        Editor Sidebar — IDE-style nav rail, card content, right detail panel
+      </div>
+      <div style="width:1240px;height:800px;background:#0d1117;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;display:flex;font-family:'Inter',system-ui,sans-serif;position:relative;isolation:isolate">
+        <!-- sidebar -->
+        <div style="width:190px;flex:none;background:#0a0d12;border-right:1px solid #1c2128;display:flex;flex-direction:column;padding:16px 10px">
+          <div style="color:#e6edf3;font-size:13px;font-weight:700;padding:0 8px 18px;font-family:'JetBrains Mono',monospace">conductor</div>
+          <div onclick="{{ opt.b.showLive }}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;cursor:pointer;color:{{ opt.b.navLiveColor }};background:{{ opt.b.navLiveBg }}"><span style="width:6px;height:6px;border-radius:50%;background:#3fb950"></span>Live</div>
+          <div onclick="{{ opt.b.showStats }}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;cursor:pointer;color:{{ opt.b.navStatsColor }};background:{{ opt.b.navStatsBg }}"><span style="width:6px;height:6px;border-radius:50%;background:#58a6ff"></span>Stats</div>
+          <div onclick="{{ opt.b.showTail }}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;cursor:pointer;color:{{ opt.b.navTailColor }};background:{{ opt.b.navTailBg }}"><span style="width:6px;height:6px;border-radius:50%;background:#e3b341"></span>Tail</div>
+          <div style="flex:1"></div>
+          <div style="padding:8px 10px;color:#8b949e;font-size:10px;font-family:'JetBrains Mono',monospace">db: conductor.db</div>
+        </div>
+        <!-- main -->
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+          <div style="height:44px;flex:none;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid #1c2128">
+            <span style="width:8px;height:8px;border-radius:50%;background:#3fb950"></span>
+            <span style="color:#e6edf3;font-size:12px;font-weight:600">proxy up</span>
+            <span style="color:#8b949e;font-size:11.5px;font-family:'JetBrains Mono',monospace">default={{ health.defaultModel }} · ladder: {{ health.ladderShort }}</span>
+          </div>
+
+          <sc-if value="{{ opt.b.isLive }}">
+          <div style="flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+              <div style="background:#12161d;border:1px solid #1c2128;border-radius:8px;padding:12px 14px"><div style="color:#8b949e;font-size:10.5px">calls</div><div style="color:#e6edf3;font-size:19px;font-weight:600;font-family:'JetBrains Mono',monospace">{{ totals.calls }}</div></div>
+              <div style="background:#12161d;border:1px solid #1c2128;border-radius:8px;padding:12px 14px"><div style="color:#8b949e;font-size:10.5px">cost</div><div style="color:#e6edf3;font-size:19px;font-weight:600;font-family:'JetBrains Mono',monospace">{{ totals.costDisplay }}</div></div>
+              <div style="background:#12161d;border:1px solid #1c2128;border-radius:8px;padding:12px 14px"><div style="color:#8b949e;font-size:10.5px">escalations</div><div style="color:#e3b341;font-size:19px;font-weight:600;font-family:'JetBrains Mono',monospace">{{ totals.escalations }}</div></div>
+              <div style="background:#12161d;border:1px solid #1c2128;border-radius:8px;padding:12px 14px"><div style="color:#8b949e;font-size:10.5px">errors</div><div style="color:#f85149;font-size:19px;font-weight:600;font-family:'JetBrains Mono',monospace">{{ totals.errors }}</div></div>
+            </div>
+            <div style="background:#12161d;border:1px solid #1c2128;border-radius:8px;flex:1;display:flex;flex-direction:column;overflow:hidden">
+              <div style="padding:10px 14px;border-bottom:1px solid #1c2128;color:#e6edf3;font-size:12px;font-weight:600">Requests</div>
+              <div style="overflow:auto;flex:1;font-family:'JetBrains Mono',monospace">
+                <sc-for list="{{ rows }}" as="row" hint-placeholder-count="10">
+                  <div onclick="{{ row.openDetailB }}" style="display:grid;grid-template-columns:44px 64px 96px 140px 1fr 90px 70px 56px;font-size:11px;padding:7px 14px;cursor:pointer;color:{{ row.rowColor }};border-bottom:1px solid #171b22" onmouseover="" >
+                    <span>{{ row.escalatedMark }}{{ row.id }}</span><span>{{ row.time }}</span><span>{{ row.harness }}</span><span>{{ row.rule }}</span><span>{{ row.modelArrow }}</span><span style="text-align:right">{{ row.tokDisplay }}</span><span style="text-align:right">{{ row.costDisplay }}</span><span style="text-align:right">{{ row.latencyDisplay }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ opt.b.isStats }}">
+          <div style="flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="color:#8b949e;font-size:11px;margin-right:4px">range</span>
+              <div onclick="{{ opt.b.setRange24h }}" style="padding:5px 12px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.b.range24hColor }};background:{{ opt.b.range24hBg }}">24h</div>
+              <div onclick="{{ opt.b.setRange7d }}" style="padding:5px 12px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.b.range7dColor }};background:{{ opt.b.range7dBg }}">7d</div>
+              <div onclick="{{ opt.b.setRange30d }}" style="padding:5px 12px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.b.range30dColor }};background:{{ opt.b.range30dBg }}">30d</div>
+            </div>
+            <div style="background:#12161d;border:1px solid #1c2128;border-radius:8px;padding:14px 16px">
+              <div style="color:#8b949e;font-size:10.5px;margin-bottom:10px">spend over {{ opt.b.range }}</div>
+              <svg width="100%" height="90" viewBox="0 0 600 90" preserveAspectRatio="none"><polyline points="0,70 60,60 120,64 180,40 240,50 300,20 360,34 420,18 480,26 540,10 600,16" fill="none" stroke="#58a6ff" stroke-width="2"></polyline></svg>
+            </div>
+            <div style="display:flex;gap:14px">
+              <div style="flex:1;background:#12161d;border:1px solid #1c2128;border-radius:8px;padding:12px 14px">
+                <div style="color:#e6edf3;font-size:12px;font-weight:600;margin-bottom:8px">by model</div>
+                <sc-for list="{{ byModel }}" as="m" hint-placeholder-count="4">
+                  <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;padding:4px 0;font-family:'JetBrains Mono',monospace"><span>{{ m.model }}</span><span style="color:#8b949e">{{ m.calls }} · {{ m.costDisplay }}</span></div>
+                </sc-for>
+              </div>
+              <div style="flex:1;background:#12161d;border:1px solid #1c2128;border-radius:8px;padding:12px 14px">
+                <div style="color:#e6edf3;font-size:12px;font-weight:600;margin-bottom:8px">by rule</div>
+                <sc-for list="{{ byRule }}" as="r" hint-placeholder-count="6">
+                  <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;padding:4px 0;font-family:'JetBrains Mono',monospace"><span>{{ r.rule }}</span><span style="color:#8b949e">{{ r.calls }} · {{ r.costDisplay }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ opt.b.isTail }}">
+          <div style="flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:8px">
+              <select onchange="{{ opt.b.onModelFilterChange }}" value="{{ opt.b.modelFilter }}" style="background:#12161d;color:#c9d1d9;border:1px solid #1c2128;border-radius:6px;font-size:11px;padding:6px 10px">
+                <sc-for list="{{ models }}" as="mo" hint-placeholder-count="4"><option value="{{ mo }}">{{ mo }}</option></sc-for>
+              </select>
+              <select onchange="{{ opt.b.onRuleFilterChange }}" value="{{ opt.b.ruleFilter }}" style="background:#12161d;color:#c9d1d9;border:1px solid #1c2128;border-radius:6px;font-size:11px;padding:6px 10px">
+                <sc-for list="{{ rules }}" as="ru" hint-placeholder-count="4"><option value="{{ ru }}">{{ ru }}</option></sc-for>
+              </select>
+            </div>
+            <sc-for list="{{ opt.b.filteredRows }}" as="row" hint-placeholder-count="10">
+              <div onclick="{{ row.openDetailB }}" style="display:flex;gap:16px;font-size:11px;color:{{ row.rowColor }};cursor:pointer;padding:5px 4px;border-bottom:1px solid #171b22;font-family:'JetBrains Mono',monospace">
+                <span>{{ row.escalatedMark }}{{ row.id }}</span><span>{{ row.time }}</span><span>{{ row.harness }}</span><span>{{ row.rule }}</span><span>{{ row.modelArrow }}</span><span>{{ row.tokDisplay }}</span><span>{{ row.costDisplay }}</span><span>{{ row.latencyDisplay }}</span>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ opt.b.detailOpen }}">
+          <div onclick="{{ opt.b.closeDetail }}" style="position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;justify-content:flex-end">
+            <div onclick="{{ opt.b.stop }}" style="width:320px;height:100%;background:#0d1117;border-left:1px solid #1c2128;padding:20px;color:#c9d1d9;font-size:11.5px;line-height:2;font-family:'JetBrains Mono',monospace">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#e6edf3;font-weight:600;font-family:'Inter',sans-serif;font-size:13px">request #{{ opt.b.detailRow.id }}</span><span onclick="{{ opt.b.closeDetail }}" style="cursor:pointer;color:#8b949e">✕</span></div>
+              <div>time&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.b.detailRow.time }}</div>
+              <div>harness&nbsp;{{ opt.b.detailRow.harness }}</div>
+              <div>rule&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.b.detailRow.rule }}</div>
+              <div>req&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.b.detailRow.requested }}</div>
+              <div>routed&nbsp;&nbsp;{{ opt.b.detailRow.routed }}</div>
+              <div>stream&nbsp;&nbsp;{{ opt.b.detailRow.streamText }}</div>
+              <div>status&nbsp;&nbsp;{{ opt.b.detailRow.status }}</div>
+              <div>latency&nbsp;{{ opt.b.detailRow.latencyDisplay }}</div>
+              <div>tokens&nbsp;&nbsp;{{ opt.b.detailRow.tokDisplay }}</div>
+              <div>cost&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.b.detailRow.costDisplay }}</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- ============ OPTION 1c — Command Deck ============ -->
+    <div id="1c" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)">
+        <a href="#1c" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none">1c</a>
+        Command Deck — dense ops/observability control room
+      </div>
+      <div style="width:1240px;height:800px;background:#090c10;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;font-family:'Inter',system-ui,sans-serif;position:relative;isolation:isolate">
+        <div style="height:46px;flex:none;display:flex;align-items:center;gap:14px;padding:0 20px;background:#0d1117;border-bottom:1px solid #1c2128">
+          <span style="color:#e6edf3;font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace">CONDUCTOR</span>
+          <span style="width:7px;height:7px;border-radius:50%;background:#3fb950;box-shadow:0 0 8px #3fb950"></span>
+          <span style="color:#3fb950;font-size:11px;font-family:'JetBrains Mono',monospace">UP</span>
+          <span style="color:#8b949e;font-size:11px;font-family:'JetBrains Mono',monospace">ladder: {{ health.ladderShort }}</span>
+          <div style="flex:1"></div>
+          <div onclick="{{ opt.c.showLive }}" style="font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;color:{{ opt.c.navLiveColor }};background:{{ opt.c.navLiveBg }}">LIVE</div>
+          <div onclick="{{ opt.c.showStats }}" style="font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;color:{{ opt.c.navStatsColor }};background:{{ opt.c.navStatsBg }}">STATS</div>
+          <div onclick="{{ opt.c.showTail }}" style="font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;color:{{ opt.c.navTailColor }};background:{{ opt.c.navTailBg }}">TAIL</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1c2128;flex:none">
+          <div style="background:#0d1117;padding:12px 18px"><div style="color:#8b949e;font-size:10px;letter-spacing:.05em">TOTAL CALLS</div><div style="color:#e6edf3;font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ totals.calls }}</div></div>
+          <div style="background:#0d1117;padding:12px 18px"><div style="color:#8b949e;font-size:10px;letter-spacing:.05em">SPEND</div><div style="color:#58a6ff;font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;text-shadow:0 0 12px rgba(88,166,255,.5)">{{ totals.costDisplay }}</div></div>
+          <div style="background:#0d1117;padding:12px 18px"><div style="color:#8b949e;font-size:10px;letter-spacing:.05em">ESCALATIONS</div><div style="color:#e3b341;font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ totals.escalations }}</div></div>
+          <div style="background:#0d1117;padding:12px 18px"><div style="color:#8b949e;font-size:10px;letter-spacing:.05em">ERRORS</div><div style="color:#f85149;font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace">{{ totals.errors }}</div></div>
+        </div>
+
+        <sc-if value="{{ opt.c.isLive }}">
+        <div style="flex:1;overflow:auto;padding:16px 20px;display:flex;gap:16px;min-height:0">
+          <div style="width:260px;flex:none;background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:14px">
+            <div style="color:#8b949e;font-size:10px;letter-spacing:.05em;margin-bottom:10px">SPEND BY MODEL</div>
+            <sc-for list="{{ byModel }}" as="m" hint-placeholder-count="4">
+              <div style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;font-family:'JetBrains Mono',monospace;margin-bottom:4px"><span>{{ m.model }}</span><span>{{ m.costDisplay }}</span></div>
+                <div style="height:5px;background:#1c2128;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ m.barPct }}%;background:#58a6ff;box-shadow:0 0 6px rgba(88,166,255,.6)"></div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:1;background:#0d1117;border:1px solid #1c2128;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+            <div style="padding:10px 16px;border-bottom:1px solid #1c2128;color:#8b949e;font-size:10px;letter-spacing:.05em">LIVE REQUEST FEED</div>
+            <div style="overflow:auto;flex:1;font-family:'JetBrains Mono',monospace">
+              <sc-for list="{{ rows }}" as="row" hint-placeholder-count="10">
+                <div onclick="{{ row.openDetailC }}" style="display:grid;grid-template-columns:44px 64px 96px 140px 1fr 90px 70px 56px;font-size:11px;padding:7px 16px;cursor:pointer;color:{{ row.rowColor }};background:{{ row.stripeBg }};border-bottom:1px solid #12161c">
+                  <span>{{ row.escalatedMark }}{{ row.id }}</span><span>{{ row.time }}</span><span>{{ row.harness }}</span><span>{{ row.rule }}</span><span>{{ row.modelArrow }}</span><span style="text-align:right">{{ row.tokDisplay }}</span><span style="text-align:right">{{ row.costDisplay }}</span><span style="text-align:right">{{ row.latencyDisplay }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ opt.c.isStats }}">
+        <div style="flex:1;overflow:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:8px">
+            <div onclick="{{ opt.c.setRange24h }}" style="padding:5px 14px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.c.range24hColor }};background:{{ opt.c.range24hBg }}">24H</div>
+            <div onclick="{{ opt.c.setRange7d }}" style="padding:5px 14px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.c.range7dColor }};background:{{ opt.c.range7dBg }}">7D</div>
+            <div onclick="{{ opt.c.setRange30d }}" style="padding:5px 14px;border-radius:5px;font-size:11px;cursor:pointer;color:{{ opt.c.range30dColor }};background:{{ opt.c.range30dBg }}">30D</div>
+          </div>
+          <div style="background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:16px">
+            <div style="color:#8b949e;font-size:10px;letter-spacing:.05em;margin-bottom:10px">SPEND TREND — {{ opt.c.range }}</div>
+            <svg width="100%" height="110" viewBox="0 0 700 110" preserveAspectRatio="none">
+              <polyline points="0,90 70,80 140,84 210,50 280,60 350,20 420,38 490,16 560,28 630,8 700,14" fill="none" stroke="#58a6ff" stroke-width="2.5"></polyline>
+              <polyline points="0,90 70,80 140,84 210,50 280,60 350,20 420,38 490,16 560,28 630,8 700,14 700,110 0,110" fill="rgba(88,166,255,.08)" stroke="none"></polyline>
+            </svg>
+          </div>
+          <div style="display:flex;gap:14px">
+            <div style="flex:1;background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:14px">
+              <div style="color:#8b949e;font-size:10px;letter-spacing:.05em;margin-bottom:10px">BY MODEL</div>
+              <sc-for list="{{ byModel }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 0"><span>{{ m.model }}</span><span>{{ m.calls }} · {{ m.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+            <div style="flex:1;background:#0d1117;border:1px solid #1c2128;border-radius:8px;padding:14px">
+              <div style="color:#8b949e;font-size:10px;letter-spacing:.05em;margin-bottom:10px">BY RULE</div>
+              <sc-for list="{{ byRule }}" as="r" hint-placeholder-count="6">
+                <div style="display:flex;justify-content:space-between;color:#c9d1d9;font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 0"><span>{{ r.rule }}</span><span>{{ r.calls }} · {{ r.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ opt.c.isTail }}">
+        <div style="flex:1;overflow:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px">
+            <select onchange="{{ opt.c.onModelFilterChange }}" value="{{ opt.c.modelFilter }}" style="background:#0d1117;color:#c9d1d9;border:1px solid #1c2128;border-radius:6px;font-size:11px;padding:6px 10px">
+              <sc-for list="{{ models }}" as="mo" hint-placeholder-count="4"><option value="{{ mo }}">{{ mo }}</option></sc-for>
+            </select>
+            <select onchange="{{ opt.c.onRuleFilterChange }}" value="{{ opt.c.ruleFilter }}" style="background:#0d1117;color:#c9d1d9;border:1px solid #1c2128;border-radius:6px;font-size:11px;padding:6px 10px">
+              <sc-for list="{{ rules }}" as="ru" hint-placeholder-count="4"><option value="{{ ru }}">{{ ru }}</option></sc-for>
+            </select>
+          </div>
+          <sc-for list="{{ opt.c.filteredRows }}" as="row" hint-placeholder-count="10">
+            <div onclick="{{ row.openDetailC }}" style="display:flex;gap:16px;font-size:11px;color:{{ row.rowColor }};cursor:pointer;padding:5px 4px;border-bottom:1px solid #171b22;font-family:'JetBrains Mono',monospace">
+              <span>{{ row.escalatedMark }}{{ row.id }}</span><span>{{ row.time }}</span><span>{{ row.harness }}</span><span>{{ row.rule }}</span><span>{{ row.modelArrow }}</span><span>{{ row.tokDisplay }}</span><span>{{ row.costDisplay }}</span><span>{{ row.latencyDisplay }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ opt.c.detailOpen }}">
+          <div onclick="{{ opt.c.closeDetail }}" style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center">
+            <div onclick="{{ opt.c.stop }}" style="width:400px;background:#0d1117;border:1px solid #2a323c;border-radius:10px;padding:20px;color:#c9d1d9;font-size:11.5px;line-height:2;font-family:'JetBrains Mono',monospace;box-shadow:0 0 40px rgba(88,166,255,.15)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#e6edf3;font-weight:700;font-size:13px">REQUEST #{{ opt.c.detailRow.id }}</span><span onclick="{{ opt.c.closeDetail }}" style="cursor:pointer;color:#8b949e">✕</span></div>
+              <div>time&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.c.detailRow.time }}</div>
+              <div>harness&nbsp;{{ opt.c.detailRow.harness }}</div>
+              <div>rule&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.c.detailRow.rule }}</div>
+              <div>req→routed&nbsp;{{ opt.c.detailRow.requested }} → {{ opt.c.detailRow.routed }}</div>
+              <div>stream&nbsp;&nbsp;{{ opt.c.detailRow.streamText }}</div>
+              <div>status&nbsp;&nbsp;{{ opt.c.detailRow.status }}</div>
+              <div>latency&nbsp;{{ opt.c.detailRow.latencyDisplay }}</div>
+              <div>tokens&nbsp;&nbsp;{{ opt.c.detailRow.tokDisplay }}</div>
+              <div>cost&nbsp;&nbsp;&nbsp;&nbsp;{{ opt.c.detailRow.costDisplay }}</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- ============ OPTION 1d — Minimal Console ============ -->
+    <div id="1d" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)">
+        <a href="#1d" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none">1d</a>
+        Minimal Console — quiet, editorial, whitespace-forward
+      </div>
+      <div style="width:1240px;height:800px;background:#0d1117;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;font-family:'Inter',system-ui,sans-serif;position:relative">
+        <div style="padding:28px 40px 0">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <span style="color:#e6edf3;font-size:15px;font-weight:600;letter-spacing:-.01em">Conductor</span>
+            <span style="width:6px;height:6px;border-radius:50%;background:#3fb950"></span>
+            <span style="color:#6e7681;font-size:12px">proxy up</span>
+          </div>
+          <div style="color:#6e7681;font-size:12px;margin-bottom:18px;font-family:'JetBrains Mono',monospace">default={{ health.defaultModel }} · ladder {{ health.ladderShort }}</div>
+          <div style="display:flex;gap:22px;border-bottom:1px solid #21262d">
+            <div onclick="{{ opt.d.showLive }}" style="padding-bottom:10px;font-size:12.5px;cursor:pointer;color:{{ opt.d.navLiveColor }};border-bottom:2px solid {{ opt.d.navLiveUnderline }}">Live</div>
+            <div onclick="{{ opt.d.showStats }}" style="padding-bottom:10px;font-size:12.5px;cursor:pointer;color:{{ opt.d.navStatsColor }};border-bottom:2px solid {{ opt.d.navStatsUnderline }}">Stats</div>
+            <div onclick="{{ opt.d.showTail }}" style="padding-bottom:10px;font-size:12.5px;cursor:pointer;color:{{ opt.d.navTailColor }};border-bottom:2px solid {{ opt.d.navTailUnderline }}">Tail</div>
+          </div>
+        </div>
+
+        <sc-if value="{{ opt.d.isLive }}">
+        <div style="flex:1;overflow:auto;padding:22px 40px;display:flex;flex-direction:column;gap:20px">
+          <div style="display:flex;gap:36px">
+            <div><div style="color:#6e7681;font-size:11px">calls</div><div style="color:#e6edf3;font-size:20px;font-weight:600">{{ totals.calls }}</div></div>
+            <div><div style="color:#6e7681;font-size:11px">cost</div><div style="color:#e6edf3;font-size:20px;font-weight:600">{{ totals.costDisplay }}</div></div>
+            <div><div style="color:#6e7681;font-size:11px">escalations</div><div style="color:#e6edf3;font-size:20px;font-weight:600">{{ totals.escalations }}</div></div>
+            <div><div style="color:#6e7681;font-size:11px">errors</div><div style="color:#e6edf3;font-size:20px;font-weight:600">{{ totals.errors }}</div></div>
+          </div>
+          <div style="flex:1;overflow:auto">
+            <sc-for list="{{ rows }}" as="row" hint-placeholder-count="10">
+              <div>
+                <div onclick="{{ row.openDetailD }}" style="display:flex;align-items:baseline;gap:18px;padding:11px 0;cursor:pointer;border-bottom:1px solid #171b22">
+                  <span style="width:5px;height:5px;border-radius:50%;background:{{ row.dotColor }};flex:none"></span>
+                  <span style="color:#6e7681;font-size:11.5px;width:56px;font-family:'JetBrains Mono',monospace">{{ row.time }}</span>
+                  <span style="color:#8b949e;font-size:12.5px;width:100px">{{ row.harness }}</span>
+                  <span style="color:#8b949e;font-size:12.5px;width:150px">{{ row.rule }}</span>
+                  <span style="color:#c9d1d9;font-size:12.5px;flex:1">{{ row.modelArrow }}</span>
+                  <span style="color:#6e7681;font-size:11.5px;width:90px;text-align:right;font-family:'JetBrains Mono',monospace">{{ row.tokDisplay }}</span>
+                  <span style="color:#c9d1d9;font-size:12.5px;width:70px;text-align:right;font-family:'JetBrains Mono',monospace">{{ row.costDisplay }}</span>
+                  <span style="color:#6e7681;font-size:11.5px;width:50px;text-align:right;font-family:'JetBrains Mono',monospace">{{ row.latencyDisplay }}</span>
+                </div>
+                <sc-if value="{{ row.isOpenD }}">
+                  <div style="padding:4px 0 16px 23px;color:#8b949e;font-size:12px;line-height:1.9;font-family:'JetBrains Mono',monospace">
+                    <div>requested&nbsp;&nbsp;{{ row.requested }}</div>
+                    <div>routed&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ row.routed }}</div>
+                    <div>stream&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ row.streamText }}</div>
+                    <div>status&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ row.status }}</div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ opt.d.isStats }}">
+        <div style="flex:1;overflow:auto;padding:22px 40px;display:flex;flex-direction:column;gap:22px">
+          <div style="display:flex;gap:18px">
+            <span onclick="{{ opt.d.setRange24h }}" style="font-size:12px;cursor:pointer;color:{{ opt.d.range24hColor }}">24h</span>
+            <span onclick="{{ opt.d.setRange7d }}" style="font-size:12px;cursor:pointer;color:{{ opt.d.range7dColor }}">7d</span>
+            <span onclick="{{ opt.d.setRange30d }}" style="font-size:12px;cursor:pointer;color:{{ opt.d.range30dColor }}">30d</span>
+          </div>
+          <svg width="100%" height="70" viewBox="0 0 760 70" preserveAspectRatio="none"><polyline points="0,58 76,50 152,54 228,32 304,40 380,14 456,26 532,10 608,20 684,6 760,12" fill="none" stroke="#8b949e" stroke-width="1.5"></polyline></svg>
+          <div style="display:flex;gap:50px">
+            <div style="flex:1">
+              <div style="color:#6e7681;font-size:11px;margin-bottom:10px;letter-spacing:.03em">BY MODEL</div>
+              <sc-for list="{{ byModel }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #171b22;color:#c9d1d9;font-size:12.5px"><span>{{ m.model }}</span><span style="font-family:'JetBrains Mono',monospace;color:#8b949e">{{ m.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+            <div style="flex:1">
+              <div style="color:#6e7681;font-size:11px;margin-bottom:10px;letter-spacing:.03em">BY RULE</div>
+              <sc-for list="{{ byRule }}" as="r" hint-placeholder-count="6">
+                <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #171b22;color:#c9d1d9;font-size:12.5px"><span>{{ r.rule }}</span><span style="font-family:'JetBrains Mono',monospace;color:#8b949e">{{ r.costDisplay }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ opt.d.isTail }}">
+        <div style="flex:1;overflow:auto;padding:22px 40px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:20px">
+            <select onchange="{{ opt.d.onModelFilterChange }}" value="{{ opt.d.modelFilter }}" style="background:transparent;color:#8b949e;border:none;border-bottom:1px solid #21262d;font-size:12px;padding:4px 0">
+              <sc-for list="{{ models }}" as="mo" hint-placeholder-count="4"><option value="{{ mo }}">{{ mo }}</option></sc-for>
+            </select>
+            <select onchange="{{ opt.d.onRuleFilterChange }}" value="{{ opt.d.ruleFilter }}" style="background:transparent;color:#8b949e;border:none;border-bottom:1px solid #21262d;font-size:12px;padding:4px 0">
+              <sc-for list="{{ rules }}" as="ru" hint-placeholder-count="4"><option value="{{ ru }}">{{ ru }}</option></sc-for>
+            </select>
+          </div>
+          <sc-for list="{{ opt.d.filteredRows }}" as="row" hint-placeholder-count="10">
+            <div style="display:flex;gap:18px;padding:9px 0;border-bottom:1px solid #171b22;color:#8b949e;font-size:12px;font-family:'JetBrains Mono',monospace">
+              <span>{{ row.time }}</span><span>{{ row.harness }}</span><span>{{ row.rule }}</span><span style="color:#c9d1d9">{{ row.modelArrow }}</span><span>{{ row.costDisplay }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+
+  </div>
+  <p style="max-width:760px;font:12px/1.6 system-ui,sans-serif;color:rgba(0,0,0,.5);margin:22px 0 0">
+    Try next: "make <a href="#1b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:2px 5px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:4px;text-decoration:none">1b</a>'s cards rounder and add a search box" · "combine <a href="#1c" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:2px 5px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:4px;text-decoration:none">1c</a>'s KPI strip with <a href="#1d" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:2px 5px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:4px;text-decoration:none">1d</a>'s row style" · "new directions"
+  </p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    tab: { a: 'live', b: 'live', c: 'live', d: 'live', m: 'live' },
+    detailId: { a: null, b: null, c: null, d: null, m: null },
+    range: { a: '24h', b: '24h', c: '24h', d: '24h', m: '24h' },
+    modelFilter: { a: 'all', b: 'all', c: 'all', d: 'all', m: 'all' },
+    ruleFilter: { a: 'all', b: 'all', c: 'all', d: 'all', m: 'all' },
+    openRowD: null,
+    agentModes: { 'claude-code': 'cli', codex: 'cli', cursor: 'app', opencode: 'cli', t3chat: 'app' },
+    session: null,
+    copiedId: null,
+    integrations: { gdrive: true, github: true, linear: false, plaid: false },
+    customMcps: [],
+    mcpFormOpen: false,
+    mcpNameDraft: '',
+    mcpUrlDraft: '',
+  };
+
+  toggleIntegration(id) { this.setState((s) => ({ integrations: { ...s.integrations, [id]: !s.integrations[id] } })); }
+  openMcpForm() { this.setState({ mcpFormOpen: true, mcpNameDraft: '', mcpUrlDraft: '' }); }
+  closeMcpForm() { this.setState({ mcpFormOpen: false }); }
+  setMcpNameDraft(v) { this.setState({ mcpNameDraft: v }); }
+  setMcpUrlDraft(v) { this.setState({ mcpUrlDraft: v }); }
+  addCustomMcp() {
+    const name = (this.state.mcpNameDraft || '').trim();
+    const url = (this.state.mcpUrlDraft || '').trim();
+    if (!name || !url) return;
+    this.setState((s) => ({
+      customMcps: [...s.customMcps, { id: 'mcp-' + Date.now(), name, url }],
+      mcpFormOpen: false,
+    }));
+  }
+  removeCustomMcp(id) { this.setState((s) => ({ customMcps: s.customMcps.filter((m) => m.id !== id) })); }
+
+  AGENT_DEFS = [
+    { id: 'claude-code', name: 'Claude Code', avatar: 'CC', accent: '#d97757', cliCmd: 'claude', cliPath: '~/projects/payment-service', appLink: 'claude://open?dir=~/projects/payment-service' },
+    { id: 'codex', name: 'Codex CLI', avatar: 'CX', accent: '#79c0ff', cliCmd: 'codex', cliPath: '~/projects/payment-service', appLink: 'codex://open?dir=~/projects/payment-service' },
+    { id: 'cursor', name: 'Cursor', avatar: 'CU', accent: '#a371f7', cliCmd: 'cursor-agent', cliPath: '~/projects/payment-service', appLink: 'cursor://file/Users/you/projects/payment-service' },
+    { id: 'opencode', name: 'OpenCode', avatar: 'OC', accent: '#3fb950', cliCmd: 'opencode', cliPath: '~/projects/payment-service', appLink: 'opencode://open?dir=~/projects/payment-service' },
+    { id: 't3chat', name: 'T3 Chat', avatar: 'T3', accent: '#e3b341', cliCmd: 't3', cliPath: '~/projects/payment-service', appLink: 'https://t3.chat/chat/last' },
+    { id: 'openclaw', name: 'OpenClaw', avatar: 'OW', accent: '#f47067', cliCmd: 'openclaw', cliPath: '~/projects/payment-service', appLink: 'openclaw://open?dir=~/projects/payment-service' },
+    { id: 'hermes', name: 'Hermes', avatar: 'HM', accent: '#56d4dd', cliCmd: 'hermes', cliPath: '~/projects/payment-service', appLink: 'hermes://open?dir=~/projects/payment-service' },
+  ];
+
+  INTEGRATION_DEFS = [
+    { id: 'gdrive', name: 'Google Drive', avatar: 'GD', accent: '#3fb950' },
+    { id: 'github', name: 'GitHub', avatar: 'GH', accent: '#8b949e' },
+    { id: 'linear', name: 'Linear', avatar: 'LN', accent: '#a371f7' },
+    { id: 'plaid', name: 'Plaid', avatar: 'PL', accent: '#58a6ff' },
+  ];
+
+  setAgentMode(id, mode) { this.setState((s) => ({ agentModes: { ...s.agentModes, [id]: mode } })); }
+  openSession(id) { this.setState((s) => ({ session: { agentId: id, mode: s.agentModes[id] } })); }
+  closeSession() { this.setState({ session: null }); }
+
+  openTarget(agent) {
+    const mode = this.state.agentModes[agent.id];
+    if (mode === 'cli') {
+      const cmd = 'cd ' + agent.cliPath + ' && ' + agent.cliCmd;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cmd).catch(() => {});
+      }
+    } else {
+      window.open(agent.appLink, '_blank');
+    }
+    this.setState({ copiedId: agent.id });
+    setTimeout(() => {
+      this.setState((s) => (s.copiedId === agent.id ? { copiedId: null } : null));
+    }, 1600);
+  }
+
+  RAW_ROWS = [
+    { id: 201, time: '12:58:40', harness: 'claude-cli/1.2', rule: 'default', requested: 'claude-3-7-sonnet', routed: 'claude-haiku-4-5', inTok: 980, outTok: 210, cost: 0.0016, latency: 390, status: 200, stream: false },
+    { id: 202, time: '12:58:55', harness: 'aider/0.60', rule: 'default', requested: 'gpt-4o', routed: 'claude-haiku-4-5', inTok: 640, outTok: 88, cost: 0.0007, latency: 275, status: 200, stream: false },
+    { id: 203, time: '12:59:10', harness: 'claude-cli/1.2', rule: 'planning-language', requested: 'claude-3-7-sonnet', routed: 'claude-fable-5', inTok: 6210, outTok: 1440, cost: 0.0328, latency: 4200, status: 200, stream: true },
+    { id: 204, time: '12:59:31', harness: 'aider/0.60', rule: 'big-context', requested: 'gpt-4o', routed: 'claude-sonnet-4-6', inTok: 58200, outTok: 740, cost: 0.0910, latency: 7600, status: 200, stream: false },
+    { id: 205, time: '12:59:50', harness: 'claude-cli/1.2', rule: 'default', requested: 'claude-3-7-sonnet', routed: 'claude-haiku-4-5', inTok: 410, outTok: 36, cost: 0.0002, latency: 210, status: 200, stream: false },
+    { id: 206, time: '13:00:04', harness: 'cursor/0.9', rule: 'explicit-frontier', requested: 'claude-3-7-sonnet', routed: 'claude-fable-5', inTok: 2100, outTok: 520, cost: 0.0210, latency: 2400, status: 200, stream: true },
+    { id: 207, time: '13:00:18', harness: 'claude-cli/1.2', rule: 'default', requested: 'claude-3-7-sonnet', routed: 'claude-haiku-4-5', inTok: 1204, outTok: 310, cost: 0.0021, latency: 842, status: 200, stream: false },
+    { id: 208, time: '13:00:32', harness: 'aider/0.60', rule: 'default', requested: 'gpt-4o', routed: 'claude-haiku-4-5', inTok: 922, outTok: 104, cost: 0.0009, latency: 611, status: 200, stream: false },
+    { id: 209, time: '13:00:47', harness: 'claude-cli/1.2', rule: 'escalated:truncated', requested: 'claude-sonnet-4-6', routed: 'claude-sonnet-4-6', inTok: 455, outTok: 388, cost: 0.0071, latency: 1922, status: 200, stream: false },
+    { id: 210, time: '13:01:02', harness: 'aider/0.60', rule: 'big-context', requested: 'gpt-4o', routed: 'claude-sonnet-4-6', inTok: 71024, outTok: 902, cost: 0.1120, latency: 9401, status: 200, stream: false },
+    { id: 211, time: '13:01:16', harness: 'claude-cli/1.2', rule: 'default', requested: 'claude-3-7-sonnet', routed: 'claude-haiku-4-5', inTok: 310, outTok: 44, cost: 0.0003, latency: 288, status: 200, stream: false },
+    { id: 212, time: '13:01:29', harness: 'opencode/2.1', rule: 'default', requested: 'gpt-4o-mini', routed: 'some-openrouter-x', inTok: 512, outTok: 96, cost: null, latency: 340, status: 200, stream: false },
+    { id: 213, time: '13:01:44', harness: 'claude-cli/1.2', rule: 'escalated:refusal', requested: 'claude-haiku-4-5', routed: 'claude-fable-5', inTok: 800, outTok: 12, cost: 0.0060, latency: 1450, status: 200, stream: false },
+    { id: 214, time: '13:02:01', harness: 'aider/0.60', rule: 'default', requested: 'gpt-4o', routed: 'claude-haiku-4-5', inTok: 0, outTok: 0, cost: null, latency: null, status: 500, stream: false },
+  ];
+
+  shortModel(m) {
+    if (!m) return '?';
+    return m.startsWith('claude-') ? m.slice(7) : m;
+  }
+
+  fmtCost(c) {
+    return c != null ? '$' + c.toFixed(4) : '?';
+  }
+
+  fmtLatency(ms) {
+    if (ms == null) return '?';
+    return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : ms + 'ms';
+  }
+
+  stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+
+  setTab(opt, val) { this.setState((s) => ({ tab: { ...s.tab, [opt]: val } })); }
+  openDetail(opt, id) { this.setState((s) => ({ detailId: { ...s.detailId, [opt]: id } })); }
+  closeDetail(opt) { this.setState((s) => ({ detailId: { ...s.detailId, [opt]: null } })); }
+  setRange(opt, val) { this.setState((s) => ({ range: { ...s.range, [opt]: val } })); }
+  setModelFilter(opt, val) { this.setState((s) => ({ modelFilter: { ...s.modelFilter, [opt]: val } })); }
+  setRuleFilter(opt, val) { this.setState((s) => ({ ruleFilter: { ...s.ruleFilter, [opt]: val } })); }
+  toggleRowD(id) { this.setState((s) => ({ openRowD: s.openRowD === id ? null : id })); }
+
+  buildRows(opt) {
+    return this.RAW_ROWS.map((r) => {
+      const isEscalated = r.rule.startsWith('escalated:');
+      const isError = r.status !== 200;
+      const rowColor = isEscalated ? '#e3b341' : isError ? '#f85149' : '#c9d1d9';
+      return {
+        id: r.id,
+        time: r.time,
+        harness: r.harness,
+        rule: r.rule,
+        requested: r.requested,
+        routed: r.routed,
+        modelArrow: this.shortModel(r.requested) + '→' + r.routed,
+        reqShort: this.shortModel(r.requested),
+        tokDisplay: r.inTok.toLocaleString() + '/' + r.outTok.toLocaleString(),
+        costDisplay: this.fmtCost(r.cost),
+        latencyDisplay: this.fmtLatency(r.latency),
+        status: r.status,
+        streamText: r.stream ? 'yes' : 'no',
+        escalatedMark: isEscalated ? '⤴ ' : '',
+        rowColor,
+        dotColor: isEscalated ? '#e3b341' : isError ? '#f85149' : '#3fb950',
+        stripeBg: isError ? 'rgba(248,81,73,.08)' : 'transparent',
+        isOpenD: this.state.openRowD === r.id,
+        openDetailA: () => this.openDetail('a', r.id),
+        openDetailB: () => this.openDetail('b', r.id),
+        openDetailC: () => this.openDetail('c', r.id),
+        openDetailD: () => this.toggleRowD(r.id),
+        openDetailM: () => this.openDetail('m', r.id),
+      };
+    });
+  }
+
+  buildSummary(rows) {
+    const byModelMap = new Map();
+    const byRuleMap = new Map();
+    let totalCost = 0, hasCost = false, escalations = 0, errors = 0;
+
+    for (const r of this.RAW_ROWS) {
+      const mk = r.routed || '?';
+      if (!byModelMap.has(mk)) byModelMap.set(mk, { model: mk, calls: 0, cost: 0, unpriced: 0, hasCost: false });
+      const m = byModelMap.get(mk);
+      m.calls++;
+      if (r.cost != null) { m.cost += r.cost; m.hasCost = true; } else { m.unpriced++; }
+
+      const rk = r.rule || '?';
+      if (!byRuleMap.has(rk)) byRuleMap.set(rk, { rule: rk, calls: 0, cost: 0, hasCost: false });
+      const ru = byRuleMap.get(rk);
+      ru.calls++;
+      if (r.cost != null) { ru.cost += r.cost; ru.hasCost = true; }
+
+      if (r.cost != null) { totalCost += r.cost; hasCost = true; }
+      if (r.rule.startsWith('escalated:')) escalations++;
+      if (r.status !== 200) errors++;
+    }
+
+    const byModelArr = [...byModelMap.values()].sort((a, b) => b.cost - a.cost);
+    const maxCost = Math.max(...byModelArr.map((m) => m.cost), 0.0001);
+    const byModel = byModelArr.map((m) => ({
+      ...m,
+      costDisplay: this.fmtCost(m.hasCost ? m.cost : null),
+      barPct: Math.round((m.cost / maxCost) * 100),
+    }));
+    const byRule = [...byRuleMap.values()].sort((a, b) => b.cost - a.cost).map((r) => ({
+      ...r,
+      costDisplay: this.fmtCost(r.hasCost ? r.cost : null),
+    }));
+
+    return {
+      byModel,
+      byRule,
+      totals: {
+        calls: this.RAW_ROWS.length,
+        costDisplay: this.fmtCost(hasCost ? totalCost : null),
+        escalations,
+        errors,
+      },
+    };
+  }
+
+  buildOption(letter, rows) {
+    const tab = this.state.tab[letter];
+    const range = this.state.range[letter];
+    const modelFilter = this.state.modelFilter[letter];
+    const ruleFilter = this.state.ruleFilter[letter];
+    const detailId = this.state.detailId[letter];
+    const detailRow = detailId != null ? rows.find((r) => r.id === detailId) : null;
+
+    const filteredRows = rows.filter((r) =>
+      (modelFilter === 'all' || r.routed === modelFilter) &&
+      (ruleFilter === 'all' || r.rule === ruleFilter)
+    );
+
+    const navColors = (active) => (active ? '#e6edf3' : '#8b949e');
+    const navBg = (active) => (active ? 'rgba(255,255,255,.06)' : 'transparent');
+    const rangeColor = (r) => (range === r ? '#e6edf3' : '#8b949e');
+    const rangeBg = (r) => (range === r ? 'rgba(255,255,255,.08)' : 'transparent');
+
+    return {
+      tab,
+      isLive: tab === 'live',
+      isLiveOff: tab !== 'live',
+      isStats: tab === 'stats',
+      isStatsOff: tab !== 'stats',
+      isTail: tab === 'tail',
+      isTailOff: tab !== 'tail',
+      isAgents: tab === 'agents',
+      isAgentsOff: tab !== 'agents',
+      showLive: () => this.setTab(letter, 'live'),
+      showStats: () => this.setTab(letter, 'stats'),
+      showTail: () => this.setTab(letter, 'tail'),
+      showAgents: () => this.setTab(letter, 'agents'),
+      navLiveColor: navColors(tab === 'live'),
+      navLiveBg: navBg(tab === 'live'),
+      navStatsColor: navColors(tab === 'stats'),
+      navStatsBg: navBg(tab === 'stats'),
+      navTailColor: navColors(tab === 'tail'),
+      navTailBg: navBg(tab === 'tail'),
+      navAgentsColor: navColors(tab === 'agents'),
+      navAgentsBg: navBg(tab === 'agents'),
+      navLiveUnderline: tab === 'live' ? '#58a6ff' : 'transparent',
+      navStatsUnderline: tab === 'stats' ? '#58a6ff' : 'transparent',
+      navTailUnderline: tab === 'tail' ? '#58a6ff' : 'transparent',
+      range,
+      setRange24h: () => this.setRange(letter, '24h'),
+      setRange7d: () => this.setRange(letter, '7d'),
+      setRange30d: () => this.setRange(letter, '30d'),
+      range24hColor: rangeColor('24h'), range24hBg: rangeBg('24h'),
+      range7dColor: rangeColor('7d'), range7dBg: rangeBg('7d'),
+      range30dColor: rangeColor('30d'), range30dBg: rangeBg('30d'),
+      modelFilter,
+      ruleFilter,
+      onModelFilterChange: (e) => this.setModelFilter(letter, e.target.value),
+      onRuleFilterChange: (e) => this.setRuleFilter(letter, e.target.value),
+      filteredRows,
+      detailOpen: !!detailRow,
+      detailRow: detailRow || {},
+      closeDetail: () => this.closeDetail(letter),
+      stop: this.stop,
+    };
+  }
+
+  renderVals() {
+    const rowsA = this.buildRows('a');
+    const rowsShared = rowsA; // same underlying data reused for all four (identical rows, per-option handlers already attached)
+    const { byModel, byRule, totals } = this.buildSummary(rowsShared);
+
+    const models = ['all', ...new Set(this.RAW_ROWS.map((r) => r.routed))];
+    const rules = ['all', ...new Set(this.RAW_ROWS.map((r) => r.rule))];
+
+    return {
+      rows: rowsShared,
+      byModel,
+      byRule,
+      totals,
+      models,
+      rules,
+      health: {
+        defaultModel: 'claude-haiku-4-5',
+        ladderShort: 'haiku-4-5 → sonnet-4-6 → fable-5',
+      },
+      opt: {
+        a: this.buildOption('a', rowsShared),
+        b: this.buildOption('b', rowsShared),
+        c: this.buildOption('c', rowsShared),
+        d: this.buildOption('d', rowsShared),
+        m: this.buildOption('m', rowsShared),
+      },
+      agents: this.AGENT_DEFS.map((a) => {
+        const mode = this.state.agentModes[a.id];
+        const isCopied = this.state.copiedId === a.id;
+        return {
+          ...a,
+          isCli: mode === 'cli',
+          isApp: mode === 'app',
+          cliColor: mode === 'cli' ? '#e6edf3' : '#6e7681',
+          cliBg: mode === 'cli' ? '#1c2128' : 'transparent',
+          appColor: mode === 'app' ? '#e6edf3' : '#6e7681',
+          appBg: mode === 'app' ? '#1c2128' : 'transparent',
+          setCli: () => this.setAgentMode(a.id, 'cli'),
+          setApp: () => this.setAgentMode(a.id, 'app'),
+          launch: () => this.openSession(a.id),
+          openTarget: () => this.openTarget(a),
+          isCopied,
+          openLabel: isCopied ? 'Copied ✓' : (mode === 'cli' ? 'Copy launch command' : 'Open app ↗'),
+          targetLine: mode === 'cli' ? ('$ cd ' + a.cliPath) : ('↗ ' + a.appLink.replace(/^https?:\/\//, '')),
+        };
+      }),
+      session: this.buildSession(),
+      integrations: this.INTEGRATION_DEFS.map((i) => {
+        const connected = !!this.state.integrations[i.id];
+        return {
+          ...i,
+          connected,
+          statusText: connected ? 'Connected' : 'Not connected',
+          statusColor: connected ? '#3fb950' : '#6e7681',
+          actionLabel: connected ? 'Disconnect' : 'Connect',
+          toggle: () => this.toggleIntegration(i.id),
+        };
+      }),
+      customMcps: this.state.customMcps.map((m) => ({ ...m, remove: () => this.removeCustomMcp(m.id) })),
+      mcpForm: {
+        open: this.state.mcpFormOpen,
+        nameVal: this.state.mcpNameDraft,
+        urlVal: this.state.mcpUrlDraft,
+        onNameChange: (e) => this.setMcpNameDraft(e.target.value),
+        onUrlChange: (e) => this.setMcpUrlDraft(e.target.value),
+        openForm: () => this.openMcpForm(),
+        close: () => this.closeMcpForm(),
+        submit: () => this.addCustomMcp(),
+        stop: this.stop,
+      },
+    };
+  }
+
+  buildSession() {
+    const s = this.state.session;
+    if (!s) return { open: false, agent: {}, isCli: false, isApp: false, close: () => this.closeSession() };
+    const agent = this.AGENT_DEFS.find((a) => a.id === s.agentId) || {};
+    return {
+      open: true,
+      agent,
+      isCli: s.mode === 'cli',
+      isApp: s.mode === 'app',
+      close: () => this.closeSession(),
+      stop: this.stop,
+    };
+  }
+}
+</script>
+</body>
+</html>
