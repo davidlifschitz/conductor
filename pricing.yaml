@@ -1,0 +1,9 @@
+# USD per million tokens. UPDATE THESE — prices drift and the values below
+# are placeholders, not authoritative. Unknown models are logged with cost=null
+# so the report can flag them instead of silently miscounting.
+
+models:
+  claude-fable-5:    { input: 0.0, output: 0.0 }   # TODO: fill from anthropic.com/pricing
+  claude-opus-4-8:   { input: 0.0, output: 0.0 }   # TODO
+  claude-sonnet-4-6: { input: 0.0, output: 0.0 }   # TODO
+  claude-haiku-4-5:  { input: 0.0, output: 0.0 }   # TODO

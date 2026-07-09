@@ -1,0 +1,51 @@
+# Conductor routing policy.
+# Rules are evaluated top-to-bottom; first match wins.
+
+default_model: claude-haiku-4-5
+
+providers:
+  # Order matters: first provider whose pattern matches the routed model is used.
+  anthropic:
+    base_url: https://api.anthropic.com
+    api_key_env: ANTHROPIC_API_KEY
+    match: ["claude-*"]
+  openrouter:
+    base_url: https://openrouter.ai/api
+    api_key_env: OPENROUTER_API_KEY
+    match: ["*"]   # catch-all: any non-Claude model goes through OpenRouter
+
+rules:
+  # 1. Explicit override always wins. Send header `x-conductor-tag: <tag>`
+  #    or prefix your prompt's system with [conductor:<tag>].
+  - name: explicit-frontier
+    match: { tag: plan }
+    route: claude-fable-5
+
+  - name: explicit-cheap
+    match: { tag: cheap }
+    route: claude-haiku-4-5
+
+  # 2. Planning-shaped requests go to the frontier model.
+  - name: planning-language
+    match: { system_regex: "(?i)\\b(plan|architect|design (a|the)|break (this|it) down|roadmap|spec out)\\b" }
+    route: claude-fable-5
+
+  # 3. Heavy context deserves a mid-tier model even for "driving".
+  - name: big-context
+    match: { min_input_tokens: 60000 }
+    route: claude-sonnet-4-6
+
+  # 4. Everything else: the daily driver.
+  - name: default
+    route: claude-haiku-4-5
+
+escalation:
+  enabled: true
+  ladder: [claude-haiku-4-5, claude-sonnet-4-6, claude-fable-5]
+  min_truncation_tokens: 64     # max_tokens stop under this = model floundered
+  uncertainty_min_hits: 2       # "I'm not sure"-type markers before retrying up
+  uncertainty_max_words: 250    # ...but only in short answers
+
+context:
+  enabled: true
+  dir: ~/.conductor/context     # put SKILL.md and REPORT.md here
