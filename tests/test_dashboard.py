@@ -456,6 +456,29 @@ def test_parser_db_global_both_positions():
     assert after.db == "/tmp/x.db"
 
 
+def test_parser_global_options_both_positions():
+    """Pre-subcommand globals must not be overwritten by subparser defaults."""
+    from conductor.dashboard.__main__ import build_parser
+
+    p = build_parser()
+
+    before = p.parse_args(["--interval", "5", "live"])
+    assert before.interval == 5.0
+
+    after = p.parse_args(["live", "--interval", "5"])
+    assert after.interval == 5.0
+
+    days_before = p.parse_args(["--days", "3", "live"])
+    assert days_before.days == 3
+
+    stats_default = p.parse_args(["stats"])
+    assert stats_default.days == 7
+
+    rows_default_cmd = p.parse_args(["--rows", "50"])
+    assert rows_default_cmd.cmd == "live"
+    assert rows_default_cmd.rows == 50
+
+
 def test_main_show_missing_id_exit_code(seeded_db):
     from conductor.dashboard.__main__ import main
 
@@ -506,3 +529,32 @@ def test_live_dashboard_tick(seeded_db, monkeypatch, tmp_path):
     text = console.export_text()
     assert text  # rendered something
     assert dash.after_id > 0
+
+
+def test_live_dashboard_corrupt_db_degrades(tmp_path, monkeypatch):
+    """Corrupt/unreadable ledger must not crash __init__ or tick()."""
+    from conductor.dashboard.app import LiveDashboard
+    from conductor.dashboard.data import Health
+
+    monkeypatch.setattr(
+        "conductor.dashboard.data.fetch_health",
+        lambda url, timeout=0.8: Health(
+            up=False, default_model=None, error="ConnectError"
+        ),
+    )
+    bad = tmp_path / "corrupt.db"
+    bad.write_bytes(b"not a sqlite database at all")
+    policy = tmp_path / "policy.yaml"
+    policy.write_text("escalation:\n  ladder: []\n")
+
+    dash = LiveDashboard(
+        db_path=str(bad),
+        proxy_url="http://localhost:8484",
+        policy_path=str(policy),
+        interval=1.0,
+        days=1,
+        rows=50,
+    )
+    assert dash.warn == "db busy, retrying"
+    dash.tick()
+    assert dash.warn == "db busy, retrying"

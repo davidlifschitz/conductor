@@ -19,6 +19,44 @@ from . import data, render
 ROOT = Path(os.environ.get("CONDUCTOR_HOME", Path(__file__).resolve().parents[2]))
 
 
+# Defaults defined once. Subparser copies use SUPPRESS so a pre-subcommand
+# flag is not overwritten by the subparser's default (same pattern as --db).
+DEFAULT_INTERVAL = 1.0
+DEFAULT_DAYS_LIVE = 1
+DEFAULT_DAYS_STATS = 7
+DEFAULT_PROXY = "http://localhost:8484"
+DEFAULT_POLICY = str(ROOT / "policy.yaml")
+DEFAULT_ROWS = 200
+DEFAULT_TAIL_N = 20
+DEFAULT_TAIL_INTERVAL = 1.0
+
+
+def _days_flag_present(argv: list[str]) -> bool:
+    return any(a == "--days" or a.startswith("--days=") for a in argv)
+
+
+def _apply_cmd_defaults(args: argparse.Namespace, argv: list[str]) -> argparse.Namespace:
+    """stats defaults to --days 7 when the flag was omitted entirely.
+
+    Top-level --days defaults to live's 1; stats' subparser uses SUPPRESS so a
+    pre-subcommand `--days N` is preserved. When stats is chosen with no
+    --days at all, bump to 7.
+    """
+    if args.cmd == "stats" and not _days_flag_present(argv):
+        args.days = DEFAULT_DAYS_STATS
+    return args
+
+
+class _DashboardParser(argparse.ArgumentParser):
+    """Applies stats --days default after parse so build_parser().parse_args
+    matches main() behavior."""
+
+    def parse_args(self, args=None, namespace=None):  # type: ignore[override]
+        raw = sys.argv[1:] if args is None else list(args)
+        ns = super().parse_args(args, namespace)
+        return _apply_cmd_defaults(ns, raw)
+
+
 def build_parser() -> argparse.ArgumentParser:
     # `--db` is global (spec §3). Top-level carries the default; subparser
     # copies use SUPPRESS so a pre-subcommand `--db` is not overwritten.
@@ -29,22 +67,22 @@ def build_parser() -> argparse.ArgumentParser:
     sub_db = argparse.ArgumentParser(add_help=False)
     sub_db.add_argument("--db", default=argparse.SUPPRESS, help=db_help)
 
-    ap = argparse.ArgumentParser(
+    ap = _DashboardParser(
         prog="python -m conductor.dashboard",
         description="Read-only terminal dashboard over the Conductor ledger.",
         parents=[top_db],
     )
     # Live defaults on the top-level parser so `parse_args([])` works
     # without a subcommand (spec §3 / test_parser_defaults).
-    ap.add_argument("--interval", type=float, default=1.0)
-    ap.add_argument("--days", type=int, default=1)
-    ap.add_argument("--proxy", default="http://localhost:8484")
+    ap.add_argument("--interval", type=float, default=DEFAULT_INTERVAL)
+    ap.add_argument("--days", type=int, default=DEFAULT_DAYS_LIVE)
+    ap.add_argument("--proxy", default=DEFAULT_PROXY)
     ap.add_argument(
         "--policy",
-        default=str(ROOT / "policy.yaml"),
+        default=DEFAULT_POLICY,
         help="policy.yaml for ladder line",
     )
-    ap.add_argument("--rows", type=int, default=200)
+    ap.add_argument("--rows", type=int, default=DEFAULT_ROWS)
 
     sub = ap.add_subparsers(dest="cmd")
 
@@ -53,22 +91,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="full-screen live dashboard (default)",
         parents=[sub_db],
     )
-    live.add_argument("--interval", type=float, default=1.0)
-    live.add_argument("--days", type=int, default=1)
-    live.add_argument("--proxy", default="http://localhost:8484")
-    live.add_argument(
-        "--policy",
-        default=str(ROOT / "policy.yaml"),
-    )
-    live.add_argument("--rows", type=int, default=200)
+    live.add_argument("--interval", type=float, default=argparse.SUPPRESS)
+    live.add_argument("--days", type=int, default=argparse.SUPPRESS)
+    live.add_argument("--proxy", default=argparse.SUPPRESS)
+    live.add_argument("--policy", default=argparse.SUPPRESS)
+    live.add_argument("--rows", type=int, default=argparse.SUPPRESS)
 
     stats = sub.add_parser("stats", help="one-shot summary tables", parents=[sub_db])
-    stats.add_argument("--days", type=int, default=7)
+    # SUPPRESS so `--days N stats` is not overwritten; default 7 applied in
+    # _apply_cmd_defaults when --days was not on the command line.
+    stats.add_argument("--days", type=int, default=argparse.SUPPRESS)
 
     tail = sub.add_parser("tail", help="plain-text request log", parents=[sub_db])
-    tail.add_argument("-n", type=int, default=20, dest="n")
+    tail.add_argument("-n", type=int, default=DEFAULT_TAIL_N, dest="n")
     tail.add_argument("--follow", action="store_true")
-    tail.add_argument("--interval", type=float, default=1.0)
+    tail.add_argument("--interval", type=float, default=DEFAULT_TAIL_INTERVAL)
 
     show = sub.add_parser("show", help="full detail of one ledger row", parents=[sub_db])
     show.add_argument("id", type=int)

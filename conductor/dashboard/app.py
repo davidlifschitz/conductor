@@ -121,7 +121,11 @@ class LiveDashboard:
         self._waiting_for_db = not data.db_exists(db_path)
 
         if not self._waiting_for_db:
-            self._backfill()
+            try:
+                self._backfill()
+            except sqlite3.Error:
+                # Locked / corrupt db at launch: degrade to warn, keep looping.
+                self.warn = "db busy, retrying"
 
     def _backfill(self) -> None:
         rows = data.fetch_recent_rows(self.db_path, self.rows)
@@ -133,7 +137,7 @@ class LiveDashboard:
 
     def tick(self) -> None:
         """One poll cycle: fetch_new_rows (unless paused) and, every 5th
-        tick, refresh Summary + Health + ladder. sqlite3.OperationalError
+        tick, refresh Summary + Health + ladder. sqlite3.Error
         -> set self.warn, keep old data."""
         self._tick_n += 1
         self._last_refresh = datetime.now().strftime("%H:%M:%S")
@@ -151,7 +155,7 @@ class LiveDashboard:
                         self.buffer.append(row)
                         self.after_id = row.id
                     self.warn = None
-            except sqlite3.OperationalError:
+            except sqlite3.Error:
                 self.warn = "db busy, retrying"
 
         if self._tick_n == 1 or self._tick_n % 5 == 0:
@@ -162,7 +166,7 @@ class LiveDashboard:
             try:
                 since = time.time() - self.days * 86400
                 self.summary = data.fetch_summary(self.db_path, since)
-            except sqlite3.OperationalError:
+            except sqlite3.Error:
                 self.warn = "db busy, retrying"
         self.health = data.fetch_health(self.proxy_url)
         self.ladder = data.load_ladder(self.policy_path)

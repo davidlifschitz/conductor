@@ -7,6 +7,7 @@ tested against a tmp db with no proxy and no terminal.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import sqlite3
 from dataclasses import dataclass
@@ -88,7 +89,7 @@ def _row_from_tuple(t: tuple) -> RequestRow:
 
 def fetch_new_rows(db_path: str, after_id: int, limit: int = 500) -> list[RequestRow]:
     """Tail cursor. Rows with id > after_id, ascending, capped at limit."""
-    with connect_ro(db_path) as c:
+    with contextlib.closing(connect_ro(db_path)) as c:
         rows = c.execute(
             f"SELECT {ROW_COLS} FROM requests WHERE id > ? ORDER BY id ASC LIMIT ?",
             (after_id, limit),
@@ -98,7 +99,7 @@ def fetch_new_rows(db_path: str, after_id: int, limit: int = 500) -> list[Reques
 
 def fetch_recent_rows(db_path: str, n: int) -> list[RequestRow]:
     """Last n rows by id (for `tail` and initial live backfill), ascending order."""
-    with connect_ro(db_path) as c:
+    with contextlib.closing(connect_ro(db_path)) as c:
         rows = c.execute(
             f"""SELECT * FROM (
                 SELECT {ROW_COLS} FROM requests ORDER BY id DESC LIMIT ?
@@ -110,7 +111,7 @@ def fetch_recent_rows(db_path: str, n: int) -> list[RequestRow]:
 
 def fetch_row(db_path: str, row_id: int) -> RequestRow | None:
     """Single row for `show`; None when the id doesn't exist."""
-    with connect_ro(db_path) as c:
+    with contextlib.closing(connect_ro(db_path)) as c:
         row = c.execute(
             f"SELECT {ROW_COLS} FROM requests WHERE id = ?",
             (row_id,),
@@ -120,7 +121,7 @@ def fetch_row(db_path: str, row_id: int) -> RequestRow | None:
 
 def fetch_summary(db_path: str, since_ts: float) -> Summary:
     """All aggregate queries for the stats pane / `stats` subcommand."""
-    with connect_ro(db_path) as c:
+    with contextlib.closing(connect_ro(db_path)) as c:
         by_model = c.execute(
             """SELECT routed_model, COUNT(*), COALESCE(SUM(input_tokens),0),
                       COALESCE(SUM(output_tokens),0), SUM(cost_usd), SUM(cost_usd IS NULL)
