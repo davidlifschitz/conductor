@@ -602,6 +602,18 @@ async function setStatsRange(range) {
   renderStats();
 }
 
+/* ── Agents tab ── */
+
+let agentsTabMounted = false;
+
+function mountAgentsTab() {
+  if (agentsTabMounted) return;
+  const tab = document.getElementById('tab-agents');
+  if (!tab || !window.ConductorAgents?.mount) return;
+  window.ConductorAgents.mount(tab);
+  agentsTabMounted = true;
+}
+
 /* ── Init ── */
 
 function bindEvents() {
@@ -637,6 +649,7 @@ function bindEvents() {
 
 async function init() {
   bindEvents();
+  mountAgentsTab();
   switchTab('live');
 
   await Promise.all([

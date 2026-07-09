@@ -29,6 +29,8 @@ DEFAULT_POLICY = str(ROOT / "policy.yaml")
 DEFAULT_ROWS = 200
 DEFAULT_TAIL_N = 20
 DEFAULT_TAIL_INTERVAL = 1.0
+DEFAULT_WEB_HOST = "127.0.0.1"
+DEFAULT_WEB_PORT = 8485
 
 
 def _days_flag_present(argv: list[str]) -> bool:
@@ -83,6 +85,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="policy.yaml for ladder line",
     )
     ap.add_argument("--rows", type=int, default=DEFAULT_ROWS)
+    ap.add_argument("--web", action="store_true", help="serve the web GUI instead of the TUI")
+    ap.add_argument("--host", default=DEFAULT_WEB_HOST)
+    ap.add_argument("--port", type=int, default=DEFAULT_WEB_PORT)
 
     sub = ap.add_subparsers(dest="cmd")
 
@@ -109,6 +114,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     show = sub.add_parser("show", help="full detail of one ledger row", parents=[sub_db])
     show.add_argument("id", type=int)
+
+    web = sub.add_parser("web", help="web GUI (browser dashboard + agents)", parents=[sub_db])
+    web.add_argument("--host", default=argparse.SUPPRESS)
+    web.add_argument("--port", type=int, default=argparse.SUPPRESS)
+    web.add_argument("--proxy", default=argparse.SUPPRESS)
+    web.add_argument("--policy", default=argparse.SUPPRESS)
 
     # After add_subparsers so dest="cmd" default is live when omitted.
     ap.set_defaults(cmd="live")
@@ -206,9 +217,17 @@ def _cmd_live(args: argparse.Namespace) -> int:
     return run_live(args)
 
 
+def _cmd_web(args: argparse.Namespace) -> int:
+    from conductor.webui.server import run_web
+
+    return run_web(args)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.cmd == "web" or (args.cmd == "live" and getattr(args, "web", False)):
+        return _cmd_web(args)
     if args.cmd == "live":
         return _cmd_live(args)
     if args.cmd == "stats":
