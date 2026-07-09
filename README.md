@@ -82,20 +82,39 @@ guessed.
 
 ## Dashboard
 
-    conductor-dashboard          # or: python -m conductor.dashboard
+```bash
+conductor-dashboard              # or: python -m conductor.dashboard
+```
 
 Full-screen live view: proxy health, spend by model/rule, and a real-time
 tail of every request (escalations highlighted). Keys: q quit, p pause,
 e escalations-only. One-shot variants:
 
-    conductor-dashboard stats --days 7
-    conductor-dashboard tail -n 50 --follow
-    conductor-dashboard show 212
+```bash
+conductor-dashboard stats --days 7
+conductor-dashboard tail -n 50 --follow
+conductor-dashboard show 212
+```
 
-Read-only over conductor.db and GET /health — safe to run anytime, even
+Read-only over `conductor.db` and `GET /health` — safe to run anytime, even
 while the proxy is down. Set `CONDUCTOR_HOME` (e.g. `~/.conductor` when
 installed via uvx/uv tool) so the dashboard and report find the ledger;
 `--db` overrides per invocation.
+
+## Web dashboard
+
+```bash
+conductor-dashboard web              # browser UI on http://127.0.0.1:8485
+conductor-dashboard --web            # same, flag on default live parser
+conductor-dashboard web --port 9000
+```
+
+Browser-based alternative to the terminal UI. **Live**, **Stats**, and **Tail**
+tabs mirror the TUI: ledger polling for new requests, summary/health refresh,
+and row-detail modals. The **Agents** tab adds a launcher for coding agents
+(Claude Code, Codex CLI, Cursor, and others) plus an MCP integrations panel
+(mock UI for now). Read-only over `conductor.db` — no policy edits or ledger
+writes. Design reference and screenshots live in `docs/design_handoff/`.
 
 ## Development
 
