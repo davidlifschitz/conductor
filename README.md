@@ -4,13 +4,35 @@ A local model router: one Anthropic-compatible endpoint that any harness can
 point at. Policy decides which model actually serves each request; every call
 lands in a SQLite ledger; a report command finds routing mistakes after the fact.
 
-## Run
+## Install & run
+
+No clone needed — run straight from GitHub with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-pip install fastapi uvicorn httpx pyyaml rich
 export ANTHROPIC_API_KEY=sk-ant-...
 export OPENROUTER_API_KEY=sk-or-...   # optional, for non-Claude models
-uvicorn conductor.proxy:app --port 8484
+uvx --from git+https://github.com/davidlifschitz/conductor conductor-proxy
+```
+
+First run creates `~/.conductor/` with a default `policy.yaml` and
+`pricing.yaml` — edit those to change routing and prices. Or install the
+commands permanently:
+
+```bash
+uv tool install git+https://github.com/davidlifschitz/conductor
+conductor-proxy                # the router, on :8484
+conductor-dashboard            # live terminal UI
+conductor-report --days 7      # retro analysis
+```
+
+(`pip install git+https://github.com/davidlifschitz/conductor` works too.)
+
+### From a clone
+
+```bash
+git clone https://github.com/davidlifschitz/conductor && cd conductor
+uv sync
+uv run conductor-proxy         # or: uv run uvicorn conductor.proxy:app --port 8484
 ```
 
 ## Point a harness at it
@@ -32,7 +54,7 @@ Anything that speaks the Anthropic Messages API works the same way.
 ## Retro analysis
 
 ```bash
-python -m conductor.report --days 7
+conductor-report --days 7      # or: python -m conductor.report --days 7
 ```
 
 Prints spend by model and rule, plus:
@@ -60,19 +82,29 @@ guessed.
 
 ## Dashboard
 
-    pip install rich          # one-time; the proxy itself doesn't need it
-    python -m conductor.dashboard
+    conductor-dashboard          # or: python -m conductor.dashboard
 
 Full-screen live view: proxy health, spend by model/rule, and a real-time
 tail of every request (escalations highlighted). Keys: q quit, p pause,
 e escalations-only. One-shot variants:
 
-    python -m conductor.dashboard stats --days 7
-    python -m conductor.dashboard tail -n 50 --follow
-    python -m conductor.dashboard show 212
+    conductor-dashboard stats --days 7
+    conductor-dashboard tail -n 50 --follow
+    conductor-dashboard show 212
 
 Read-only over conductor.db and GET /health — safe to run anytime, even
-while the proxy is down. Respects CONDUCTOR_HOME like conductor.report.
+while the proxy is down. Set `CONDUCTOR_HOME` (e.g. `~/.conductor` when
+installed via uvx/uv tool) so the dashboard and report find the ledger;
+`--db` overrides per invocation.
+
+## Development
+
+```bash
+uv sync --all-groups     # env with dev tools
+uv run pytest            # test suite
+uv run ruff check .      # lint
+uv run ruff format .     # format
+```
 
 ## Still open
 

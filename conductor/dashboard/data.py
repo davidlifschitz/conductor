@@ -16,7 +16,6 @@ from pathlib import Path
 import httpx
 import yaml
 
-
 ROW_COLS = (
     "id, ts, harness, tag, rule, requested_model, routed_model, "
     "input_tokens, output_tokens, cost_usd, latency_ms, stream, "

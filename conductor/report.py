@@ -49,7 +49,8 @@ def main():
 
     print("\n-- by rule --")
     for rule, n, cost in ledger.query(
-        "SELECT rule, COUNT(*), SUM(cost_usd) FROM requests WHERE ts >= ? GROUP BY rule ORDER BY 2 DESC",
+        "SELECT rule, COUNT(*), SUM(cost_usd) FROM requests "
+        "WHERE ts >= ? GROUP BY rule ORDER BY 2 DESC",
         (since,),
     ):
         print(f"  {rule:<28}{n:>6} calls   {fmt_cost(cost)}")

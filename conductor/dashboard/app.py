@@ -223,10 +223,7 @@ class LiveDashboard:
                 render.tail_table(self._tail_rows(), max_rows=self.rows)
             )
 
-        if _has_termios():
-            keys = "q quit · p pause · e escalations-only"
-        else:
-            keys = "Ctrl-C quit"
+        keys = "q quit · p pause · e escalations-only" if _has_termios() else "Ctrl-C quit"
 
         footer = Text(
             f"  {keys}        refreshed {self._last_refresh} · "

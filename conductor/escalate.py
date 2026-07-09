@@ -15,7 +15,9 @@ UNCERTAINTY_MARKERS = (
 
 def _text_of(response_json: dict) -> str:
     parts = response_json.get("content") or []
-    return " ".join(b.get("text", "") for b in parts if isinstance(b, dict) and b.get("type") == "text")
+    return " ".join(
+        b.get("text", "") for b in parts if isinstance(b, dict) and b.get("type") == "text"
+    )
 
 
 def should_escalate(response_json: dict, cfg: dict) -> str | None:
@@ -40,7 +42,9 @@ def should_escalate(response_json: dict, cfg: dict) -> str | None:
     lowered = text.lower()
     hits = sum(lowered.count(m) for m in UNCERTAINTY_MARKERS)
     words = max(len(re.findall(r"\w+", text)), 1)
-    if hits >= int(cfg.get("uncertainty_min_hits", 2)) and words < int(cfg.get("uncertainty_max_words", 250)):
+    min_hits = int(cfg.get("uncertainty_min_hits", 2))
+    max_words = int(cfg.get("uncertainty_max_words", 250))
+    if hits >= min_hits and words < max_words:
         return "high-uncertainty-density"
 
     return None

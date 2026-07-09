@@ -104,20 +104,24 @@ def _stream_passthrough(url, headers, body, base, started, translate_model=None)
         status, buf = 0, b""
         lines = []
         try:
-            async with httpx.AsyncClient(timeout=600) as client:
-                async with client.stream("POST", url, headers=headers, json=body) as upstream:
-                    status = upstream.status_code
-                    async for chunk in upstream.aiter_bytes():
-                        buf += chunk
-                        while b"\n" in buf:
-                            line, buf = buf.split(b"\n", 1)
-                            _harvest_usage(line, usage)
-                            lines.append(line)
-                        if translate_model is None:
-                            yield chunk
-                        else:
-                            for out in openai_compat.stream_translate(_drain(lines), translate_model):
-                                yield out
+            async with (
+                httpx.AsyncClient(timeout=600) as client,
+                client.stream("POST", url, headers=headers, json=body) as upstream,
+            ):
+                status = upstream.status_code
+                async for chunk in upstream.aiter_bytes():
+                    buf += chunk
+                    while b"\n" in buf:
+                        line, buf = buf.split(b"\n", 1)
+                        _harvest_usage(line, usage)
+                        lines.append(line)
+                    if translate_model is None:
+                        yield chunk
+                    else:
+                        for out in openai_compat.stream_translate(
+                            _drain(lines), translate_model
+                        ):
+                            yield out
             if translate_model is not None and lines:  # flush any tail
                 for out in openai_compat.stream_translate(_drain(lines), translate_model):
                     yield out

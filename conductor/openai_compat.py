@@ -7,7 +7,12 @@ import json
 import time
 import uuid
 
-STOP_MAP = {"end_turn": "stop", "max_tokens": "length", "stop_sequence": "stop", "refusal": "content_filter"}
+STOP_MAP = {
+    "end_turn": "stop",
+    "max_tokens": "length",
+    "stop_sequence": "stop",
+    "refusal": "content_filter",
+}
 
 
 def to_anthropic(body: dict) -> dict:
@@ -16,7 +21,10 @@ def to_anthropic(body: dict) -> dict:
     for m in body.get("messages", []):
         role, content = m.get("role"), m.get("content")
         if isinstance(content, list):  # OpenAI content-part form
-            content = " ".join(p.get("text", "") for p in content if isinstance(p, dict) and p.get("type") == "text")
+            content = " ".join(
+                p.get("text", "") for p in content
+                if isinstance(p, dict) and p.get("type") == "text"
+            )
         if role in ("system", "developer"):
             system_parts.append(content or "")
         elif role in ("user", "assistant"):
@@ -29,7 +37,8 @@ def to_anthropic(body: dict) -> dict:
     }
     if system_parts:
         out["system"] = "\n\n".join(system_parts)
-    for k_src, k_dst in (("temperature", "temperature"), ("top_p", "top_p"), ("stop", "stop_sequences")):
+    passthrough = (("temperature", "temperature"), ("top_p", "top_p"), ("stop", "stop_sequences"))
+    for k_src, k_dst in passthrough:
         if body.get(k_src) is not None:
             v = body[k_src]
             out[k_dst] = [v] if k_dst == "stop_sequences" and isinstance(v, str) else v
@@ -54,7 +63,11 @@ def from_anthropic(resp: dict) -> dict:
             "message": {"role": "assistant", "content": text},
             "finish_reason": STOP_MAP.get(resp.get("stop_reason"), "stop"),
         }],
-        "usage": {"prompt_tokens": in_tok, "completion_tokens": out_tok, "total_tokens": in_tok + out_tok},
+        "usage": {
+            "prompt_tokens": in_tok,
+            "completion_tokens": out_tok,
+            "total_tokens": in_tok + out_tok,
+        },
     }
 
 
