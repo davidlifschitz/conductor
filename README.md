@@ -104,17 +104,17 @@ installed via uvx/uv tool) so the dashboard and report find the ledger;
 ## Web dashboard
 
 ```bash
-conductor-dashboard web              # browser UI on http://127.0.0.1:8485
-conductor-dashboard --web            # same, flag on default live parser
+conductor-dashboard web --project ~/Downloads/conductor
+conductor-dashboard --web
 conductor-dashboard web --port 9000
 ```
 
-Browser-based alternative to the terminal UI. **Live**, **Stats**, and **Tail**
-tabs mirror the TUI: ledger polling for new requests, summary/health refresh,
-and row-detail modals. The **Agents** tab adds a launcher for coding agents
-(Claude Code, Codex CLI, Cursor, and others) plus an MCP integrations panel
-(mock UI for now). Read-only over `conductor.db` — no policy edits or ledger
-writes. Design reference and screenshots live in `docs/design_handoff/`.
+Browser UI on `http://127.0.0.1:8485`. **Live / Stats / Tail** poll the real
+ledger and proxy health. **Agents** detects CLIs on your PATH (`claude`,
+`cursor`, `codex`, …), builds Conductor-aware launch commands for the selected
+project, and previews recent ledger rows for that harness. Custom MCP servers
+persist in `~/.conductor/mcp.json`; built-in integrations are detect-only
+(no OAuth yet). Design reference: `docs/design_handoff/`.
 
 ## Development
 

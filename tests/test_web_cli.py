@@ -35,3 +35,9 @@ def test_web_subcommand_custom_port(parser):
     assert args.cmd == "web"
     assert args.port == 9000
     assert args.host == EXPECTED_WEB_HOST
+
+
+def test_web_project_flag(parser):
+    args = parser.parse_args(["web", "--project", "/tmp/proj"])
+    assert args.cmd == "web"
+    assert args.project == "/tmp/proj"

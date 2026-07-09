@@ -153,12 +153,14 @@ function renderHeader() {
     label.textContent = `DOWN (${err})`;
   }
 
+  const parts = [];
   if (state.ladder.length) {
-    const shortLadder = state.ladder.map(shortModel).join(' → ');
-    ladderEl.textContent = `ladder: ${shortLadder}`;
-  } else {
-    ladderEl.textContent = 'ladder: —';
+    parts.push(`ladder: ${state.ladder.map(shortModel).join(' → ')}`);
   }
+  if (up && state.health.default_model) {
+    parts.push(`default=${shortModel(state.health.default_model)}`);
+  }
+  ladderEl.textContent = parts.length ? parts.join('  ·  ') : 'ladder: —';
 }
 
 function renderKPIs() {
@@ -257,8 +259,10 @@ function renderLiveRows() {
   container.replaceChildren();
 
   if (!state.rows.length) {
-    const empty = el('div', 'panel-empty', 'waiting for ledger');
+    const empty = el('div', 'panel-empty');
     empty.style.padding = '12px';
+    empty.textContent =
+      'no requests yet — start conductor-proxy and point a harness at :8484';
     container.appendChild(empty);
     return;
   }
@@ -462,6 +466,7 @@ function openDetail(id) {
   const lines = [
     ['time', `${fmtDateTime(row.ts)} (local)`],
     ['harness', nullText(row.harness)],
+    ['tag', nullText(row.tag)],
     ['rule', rule],
     ['req→routed', `${nullText(row.requested_model)} → ${nullText(row.routed_model)}`],
     ['stream', streamText(row.stream)],

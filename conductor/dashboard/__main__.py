@@ -31,6 +31,7 @@ DEFAULT_TAIL_N = 20
 DEFAULT_TAIL_INTERVAL = 1.0
 DEFAULT_WEB_HOST = "127.0.0.1"
 DEFAULT_WEB_PORT = 8485
+DEFAULT_PROJECT = os.environ.get("CONDUCTOR_PROJECT") or ""
 
 
 def _days_flag_present(argv: list[str]) -> bool:
@@ -88,6 +89,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--web", action="store_true", help="serve the web GUI instead of the TUI")
     ap.add_argument("--host", default=DEFAULT_WEB_HOST)
     ap.add_argument("--port", type=int, default=DEFAULT_WEB_PORT)
+    ap.add_argument(
+        "--project",
+        default=DEFAULT_PROJECT or None,
+        help="project dir for Agents launch commands "
+        "(default: $CONDUCTOR_PROJECT / last used / cwd)",
+    )
 
     sub = ap.add_subparsers(dest="cmd")
 
@@ -120,6 +127,7 @@ def build_parser() -> argparse.ArgumentParser:
     web.add_argument("--port", type=int, default=argparse.SUPPRESS)
     web.add_argument("--proxy", default=argparse.SUPPRESS)
     web.add_argument("--policy", default=argparse.SUPPRESS)
+    web.add_argument("--project", default=argparse.SUPPRESS)
 
     # After add_subparsers so dest="cmd" default is live when omitted.
     ap.set_defaults(cmd="live")
