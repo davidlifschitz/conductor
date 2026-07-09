@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conductor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="agents.css">
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Top nav -->
+    <header class="nav-bar">
+      <span class="wordmark">CONDUCTOR</span>
+      <span id="status-dot" class="status-dot status-dot--up"></span>
+      <span id="status-label" class="status-label status-label--up">UP</span>
+      <span id="ladder-text" class="ladder-text">ladder: —</span>
+      <div class="nav-spacer"></div>
+      <nav class="nav-tabs">
+        <button type="button" id="nav-live" class="nav-tab active" data-tab="live">LIVE</button>
+        <button type="button" id="nav-stats" class="nav-tab" data-tab="stats">STATS</button>
+        <button type="button" id="nav-tail" class="nav-tab" data-tab="tail">TAIL</button>
+        <button type="button" id="nav-agents" class="nav-tab" data-tab="agents">AGENTS</button>
+      </nav>
+    </header>
+
+    <!-- KPI strip -->
+    <div class="kpi-strip">
+      <div class="kpi-tile">
+        <div class="kpi-label">TOTAL CALLS</div>
+        <div id="kpi-calls" class="kpi-value">0</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">SPEND</div>
+        <div id="kpi-spend" class="kpi-value kpi-value--spend">$0.0000</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">ESCALATIONS</div>
+        <div id="kpi-escalations" class="kpi-value kpi-value--escalations">0</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">ERRORS</div>
+        <div id="kpi-errors" class="kpi-value kpi-value--errors">0</div>
+      </div>
+    </div>
+
+    <!-- Live tab -->
+    <section id="tab-live" class="tab-panel">
+      <div class="live-content">
+        <div class="live-panels">
+          <div class="panel">
+            <div class="panel-title">┌─ by model ─</div>
+            <div id="live-by-model" class="panel-body"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">┌─ by rule ─</div>
+            <div id="live-by-rule" class="panel-body"></div>
+          </div>
+        </div>
+        <div class="requests-panel">
+          <div class="panel-title panel-title--bordered">┌─ requests (newest last) ─</div>
+          <div class="requests-scroll">
+            <div class="requests-header">
+              <span>id</span>
+              <span>time</span>
+              <span>harness</span>
+              <span>rule</span>
+              <span>req → routed</span>
+              <span class="col-right">tok</span>
+              <span class="col-right">cost</span>
+              <span class="col-right">ms</span>
+            </div>
+            <div id="live-rows" class="requests-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats tab -->
+    <section id="tab-stats" class="tab-panel" hidden>
+      <div class="stats-content">
+        <div class="range-pills">
+          <button type="button" class="range-pill active" data-range="24h">24H</button>
+          <button type="button" class="range-pill" data-range="7d">7D</button>
+          <button type="button" class="range-pill" data-range="30d">30D</button>
+        </div>
+        <div class="sparkline-panel">
+          <div id="sparkline-label" class="sparkline-label">SPEND TREND — 24H</div>
+          <svg id="sparkline-svg" class="sparkline-svg" viewBox="0 0 700 100" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="stats-panels">
+          <div class="stats-panel">
+            <div class="stats-panel-title">BY MODEL</div>
+            <div id="stats-by-model" class="stats-panel-body"></div>
+          </div>
+          <div class="stats-panel">
+            <div class="stats-panel-title">BY RULE</div>
+            <div id="stats-by-rule" class="stats-panel-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tail tab -->
+    <section id="tab-tail" class="tab-panel" hidden>
+      <div class="tail-content">
+        <div class="tail-filters">
+          <select id="tail-model-filter" class="tail-select" aria-label="Filter by model">
+            <option value="all">all models</option>
+          </select>
+          <select id="tail-rule-filter" class="tail-select" aria-label="Filter by rule">
+            <option value="all">all rules</option>
+          </select>
+        </div>
+        <div id="tail-rows" class="tail-rows"></div>
+      </div>
+    </section>
+
+    <!-- Agents tab (empty container for agents-ui worker) -->
+    <section id="tab-agents" class="tab-panel" hidden></section>
+  </div>
+
+  <!-- Row detail modal -->
+  <div id="detail-modal" class="modal-overlay" hidden>
+    <div class="modal-card" role="dialog" aria-labelledby="detail-title">
+      <div class="modal-header">
+        <span id="detail-title" class="modal-title">REQUEST #—</span>
+        <button type="button" id="detail-close" class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div id="detail-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="app.js" defer></script>
+  <script src="agents.js" defer></script>
+</body>
+</html>
