@@ -29,9 +29,14 @@ app = FastAPI(title="conductor")
 HOP_HEADERS = {"host", "content-length", "authorization", "x-api-key", "x-conductor-tag"}
 
 
-def _headers_for(req: Request, api_key: str) -> dict:
+def _headers_for(req: Request, provider: dict) -> dict:
     headers = {k: v for k, v in req.headers.items() if k.lower() not in HOP_HEADERS}
-    headers["x-api-key"] = api_key
+    # Anthropic authenticates via x-api-key; everything else (OpenRouter et al.)
+    # expects a Bearer token.
+    if provider["name"] == "anthropic":
+        headers["x-api-key"] = provider["api_key"]
+    else:
+        headers["authorization"] = f"Bearer {provider['api_key']}"
     headers.setdefault("anthropic-version", "2023-06-01")
     headers["content-type"] = "application/json"
     return headers
@@ -67,7 +72,7 @@ async def _dispatch(req: Request, body: dict):
         "stream": 1 if body.get("stream") else 0,
     }
     url = f"{provider['base_url']}/v1/messages"
-    return url, _headers_for(req, provider["api_key"]), base
+    return url, _headers_for(req, provider), base
 
 
 async def _run_with_escalation(url, headers, body, base, started):
@@ -88,7 +93,11 @@ async def _run_with_escalation(url, headers, body, base, started):
 
     retry_body = dict(body, model=up)
     provider = policy.provider_for(up)
-    retry_headers = dict(headers, **{"x-api-key": provider["api_key"]})
+    retry_headers = {k: v for k, v in headers.items() if k not in ("x-api-key", "authorization")}
+    if provider["name"] == "anthropic":
+        retry_headers["x-api-key"] = provider["api_key"]
+    else:
+        retry_headers["authorization"] = f"Bearer {provider['api_key']}"
     retry_base = dict(base, routed_model=up)
     t2 = time.time()
     second = await _call(f"{provider['base_url']}/v1/messages", retry_headers, retry_body)
