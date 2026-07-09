@@ -4,3 +4,7 @@ conductor.db
 .DS_Store
 .venv/
 .pytest_cache/
+
+# Local artifacts
+Conductor GUI Design.zip
+outputs/
