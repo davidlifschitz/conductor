@@ -439,6 +439,23 @@ def test_parser_defaults():
     assert a3.id == 5
 
 
+def test_parser_db_global_both_positions():
+    """`--db` is global: valid before or after the subcommand (spec §3)."""
+    from conductor.dashboard.__main__ import ROOT, build_parser
+
+    p = build_parser()
+    default_db = str(ROOT / "conductor.db")
+
+    omitted = p.parse_args(["stats"])
+    assert omitted.db == default_db
+
+    before = p.parse_args(["--db", "/tmp/x.db", "stats"])
+    assert before.db == "/tmp/x.db"
+
+    after = p.parse_args(["stats", "--db", "/tmp/x.db"])
+    assert after.db == "/tmp/x.db"
+
+
 def test_main_show_missing_id_exit_code(seeded_db):
     from conductor.dashboard.__main__ import main
 

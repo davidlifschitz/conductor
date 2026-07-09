@@ -20,18 +20,19 @@ ROOT = Path(os.environ.get("CONDUCTOR_HOME", Path(__file__).resolve().parents[2]
 
 
 def build_parser() -> argparse.ArgumentParser:
-    # Shared so `--db` works both before and after the subcommand.
-    common = argparse.ArgumentParser(add_help=False)
-    common.add_argument(
-        "--db",
-        default=str(ROOT / "conductor.db"),
-        help="ledger path (default: $CONDUCTOR_HOME/conductor.db)",
-    )
+    # `--db` is global (spec §3). Top-level carries the default; subparser
+    # copies use SUPPRESS so a pre-subcommand `--db` is not overwritten.
+    db_help = "ledger path (default: $CONDUCTOR_HOME/conductor.db)"
+    db_default = str(ROOT / "conductor.db")
+    top_db = argparse.ArgumentParser(add_help=False)
+    top_db.add_argument("--db", default=db_default, help=db_help)
+    sub_db = argparse.ArgumentParser(add_help=False)
+    sub_db.add_argument("--db", default=argparse.SUPPRESS, help=db_help)
 
     ap = argparse.ArgumentParser(
         prog="python -m conductor.dashboard",
         description="Read-only terminal dashboard over the Conductor ledger.",
-        parents=[common],
+        parents=[top_db],
     )
     # Live defaults on the top-level parser so `parse_args([])` works
     # without a subcommand (spec §3 / test_parser_defaults).
@@ -50,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     live = sub.add_parser(
         "live",
         help="full-screen live dashboard (default)",
-        parents=[common],
+        parents=[sub_db],
     )
     live.add_argument("--interval", type=float, default=1.0)
     live.add_argument("--days", type=int, default=1)
@@ -61,15 +62,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     live.add_argument("--rows", type=int, default=200)
 
-    stats = sub.add_parser("stats", help="one-shot summary tables", parents=[common])
+    stats = sub.add_parser("stats", help="one-shot summary tables", parents=[sub_db])
     stats.add_argument("--days", type=int, default=7)
 
-    tail = sub.add_parser("tail", help="plain-text request log", parents=[common])
+    tail = sub.add_parser("tail", help="plain-text request log", parents=[sub_db])
     tail.add_argument("-n", type=int, default=20, dest="n")
     tail.add_argument("--follow", action="store_true")
     tail.add_argument("--interval", type=float, default=1.0)
 
-    show = sub.add_parser("show", help="full detail of one ledger row", parents=[common])
+    show = sub.add_parser("show", help="full detail of one ledger row", parents=[sub_db])
     show.add_argument("id", type=int)
 
     # After add_subparsers so dest="cmd" default is live when omitted.
