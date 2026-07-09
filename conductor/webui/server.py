@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import time
 from contextlib import closing
@@ -10,9 +11,9 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from conductor.dashboard.data import (
-    RequestRow,
     Summary,
     connect_ro,
     db_exists,
@@ -23,26 +24,8 @@ from conductor.dashboard.data import (
     fetch_summary,
     load_ladder,
 )
-
-
-def _row_to_dict(row: RequestRow) -> dict[str, Any]:
-    return {
-        "id": row.id,
-        "ts": row.ts,
-        "harness": row.harness,
-        "tag": row.tag,
-        "rule": row.rule,
-        "requested_model": row.requested_model,
-        "routed_model": row.routed_model,
-        "input_tokens": row.input_tokens,
-        "output_tokens": row.output_tokens,
-        "cost_usd": row.cost_usd,
-        "latency_ms": row.latency_ms,
-        "stream": row.stream,
-        "status": row.status,
-        "est_input_tokens": row.est_input_tokens,
-        "escalated": row.escalated,
-    }
+from conductor.webui import agents_data
+from conductor.webui.agents_data import request_row_to_dict
 
 
 def _summary_to_dict(summary: Summary) -> dict[str, Any]:
@@ -100,7 +83,7 @@ def fetch_spend_trend(db_path: str, days: float, buckets: int) -> list[dict[str,
         for i in range(buckets):
             start = since + i * width
             end = since + (i + 1) * width
-            total_cost, row_count, null_count = c.execute(
+            total_cost, row_count, _null_count = c.execute(
                 """SELECT SUM(cost_usd), COUNT(*), SUM(cost_usd IS NULL)
                    FROM requests WHERE ts >= ? AND ts < ?""",
                 (start, end),
@@ -116,8 +99,28 @@ def fetch_spend_trend(db_path: str, days: float, buckets: int) -> list[dict[str,
     return result
 
 
-def create_app(db_path: str, proxy_url: str, policy_path: str) -> FastAPI:
+class ProjectBody(BaseModel):
+    path: str
+
+
+class McpCustomBody(BaseModel):
+    name: str = Field(min_length=1)
+    url: str = Field(min_length=1)
+
+
+def create_app(
+    db_path: str,
+    proxy_url: str,
+    policy_path: str,
+    project: str | None = None,
+    home: str | None = None,
+) -> FastAPI:
     app = FastAPI()
+    home_path = agents_data.conductor_home(home)
+    # Mutable project state for this process (also persisted on PUT).
+    app.state.project = agents_data.resolve_project(project, home=home_path)
+    app.state.proxy_url = proxy_url.rstrip("/")
+    app.state.home = home_path
 
     @app.get("/api/health")
     def api_health() -> dict[str, Any]:
@@ -136,7 +139,7 @@ def create_app(db_path: str, proxy_url: str, policy_path: str) -> FastAPI:
             rows = _with_db_retry(fetch_new_rows, db_path, after_id, limit)
         except sqlite3.OperationalError:
             return {"rows": []}
-        return {"rows": [_row_to_dict(r) for r in rows]}
+        return {"rows": [request_row_to_dict(r) for r in rows]}
 
     @app.get("/api/rows/recent")
     def api_rows_recent(n: int = 200) -> dict[str, list[dict[str, Any]]]:
@@ -146,7 +149,7 @@ def create_app(db_path: str, proxy_url: str, policy_path: str) -> FastAPI:
             rows = _with_db_retry(fetch_recent_rows, db_path, n)
         except sqlite3.OperationalError:
             return {"rows": []}
-        return {"rows": [_row_to_dict(r) for r in rows]}
+        return {"rows": [request_row_to_dict(r) for r in rows]}
 
     @app.get("/api/rows/{row_id}")
     def api_row(row_id: int) -> dict[str, Any]:
@@ -158,7 +161,7 @@ def create_app(db_path: str, proxy_url: str, policy_path: str) -> FastAPI:
             raise HTTPException(status_code=404, detail="not found") from None
         if row is None:
             raise HTTPException(status_code=404, detail="not found")
-        return _row_to_dict(row)
+        return request_row_to_dict(row)
 
     @app.get("/api/summary")
     def api_summary(days: float = 1) -> dict[str, Any]:
@@ -181,6 +184,68 @@ def create_app(db_path: str, proxy_url: str, policy_path: str) -> FastAPI:
             return {"buckets": _empty_spend_trend(days, buckets)}
         return {"buckets": trend}
 
+    @app.get("/api/project")
+    def api_project_get() -> dict[str, Any]:
+        return app.state.project.to_dict()
+
+    @app.put("/api/project")
+    def api_project_put(body: ProjectBody) -> dict[str, Any]:
+        try:
+            info = agents_data.set_project(body.path, home=app.state.home)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        app.state.project = info
+        return info.to_dict()
+
+    @app.get("/api/agents")
+    def api_agents() -> dict[str, Any]:
+        project = app.state.project
+        agents = agents_data.list_agents(project.path, app.state.proxy_url)
+        return {
+            "proxy_url": app.state.proxy_url,
+            "project": project.to_dict(),
+            "agents": [a.to_dict() for a in agents],
+        }
+
+    @app.get("/api/agents/{agent_id}/sessions")
+    def api_agent_sessions(agent_id: str, limit: int = 8, mode: str = "cli") -> dict[str, Any]:
+        if agents_data.agent_by_id(agent_id) is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        try:
+            preview = agents_data.fetch_agent_sessions(
+                db_path, agent_id, mode=mode, limit=limit
+            )
+        except KeyError:
+            raise HTTPException(status_code=404, detail="unknown agent") from None
+        except sqlite3.OperationalError:
+            preview = agents_data.SessionPreview(
+                agent_id=agent_id, mode=mode, routed_model=None, rule=None, rows=[], empty=True
+            )
+        return preview.to_dict()
+
+    @app.get("/api/mcp")
+    def api_mcp_get() -> dict[str, Any]:
+        stored = agents_data.load_mcp(app.state.home)
+        return {
+            "integrations": agents_data.list_integrations(),
+            "custom": stored["custom"],
+        }
+
+    @app.post("/api/mcp/custom")
+    def api_mcp_add(body: McpCustomBody) -> dict[str, Any]:
+        try:
+            entry = agents_data.add_custom_mcp(body.name, body.url, home=app.state.home)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        return entry
+
+    @app.delete("/api/mcp/custom/{mcp_id}")
+    def api_mcp_delete(mcp_id: str) -> dict[str, Any]:
+        ok = agents_data.remove_custom_mcp(mcp_id, home=app.state.home)
+        if not ok:
+            raise HTTPException(status_code=404, detail="not found")
+        return {"ok": True}
+
     static_dir = Path(__file__).parent / "static"
     if static_dir.is_dir():
         app.mount("/", StaticFiles(directory=static_dir, html=True))
@@ -189,9 +254,17 @@ def create_app(db_path: str, proxy_url: str, policy_path: str) -> FastAPI:
 
 
 def run_web(args) -> int:
-    """Serve the web dashboard; args has db, proxy, policy, host, port."""
+    """Serve the web dashboard; args has db, proxy, policy, host, port, project."""
     import uvicorn
 
-    app = create_app(args.db, args.proxy, args.policy)
+    project = getattr(args, "project", None) or os.environ.get("CONDUCTOR_PROJECT")
+    home = os.environ.get("CONDUCTOR_HOME")
+    app = create_app(
+        args.db,
+        args.proxy,
+        args.policy,
+        project=project,
+        home=home,
+    )
     uvicorn.run(app, host=args.host, port=args.port)
     return 0
