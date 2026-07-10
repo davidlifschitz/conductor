@@ -23,6 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
+conductor = "conductor.cli:main"
 conductor-proxy = "conductor.serve:main"
 conductor-dashboard = "conductor.dashboard.__main__:main"
 conductor-report = "conductor.report:main"

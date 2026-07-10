@@ -8,3 +8,7 @@ conductor.db
 # Local artifacts
 Conductor GUI Design.zip
 outputs/
+
+# Local runtime
+~/.conductor/run/
+~/.conductor/logs/

@@ -4,7 +4,36 @@ A local model router: one Anthropic-compatible endpoint that any harness can
 point at. Policy decides which model actually serves each request; every call
 lands in a SQLite ledger; a report command finds routing mistakes after the fact.
 
-## Install & run
+## Local app (daily driver)
+
+```bash
+uv tool install git+https://github.com/davidlifschitz/conductor   # once
+conductor setup          # scaffold ~/.conductor (env, policy, context)
+conductor start --open   # proxy :8484 + dashboard :8485, open browser
+conductor status
+conductor stop
+```
+
+Keys live in `~/.conductor/env` (mode 0600). `conductor setup` will copy
+`OPENROUTER_API_KEY` from `~/.hermes/.env` if present. On macOS, start the
+proxy at login:
+
+```bash
+conductor service install      # LaunchAgent KeepAlive
+conductor service uninstall
+```
+
+Shell helpers (optional, in your `~/.zshrc`):
+
+```bash
+conductor-on    # export ANTHROPIC_BASE_URL=http://localhost:8484
+conductor-off   # unset it
+```
+
+Low-level commands still work: `conductor-proxy`, `conductor-dashboard`,
+`conductor-report`.
+
+## Install & run (one-shot / scripting)
 
 No clone needed — run straight from GitHub with [uv](https://docs.astral.sh/uv/):
 
@@ -20,9 +49,7 @@ commands permanently:
 
 ```bash
 uv tool install git+https://github.com/davidlifschitz/conductor
-conductor-proxy                # the router, on :8484
-conductor-dashboard            # live terminal UI
-conductor-report --days 7      # retro analysis
+conductor start --open
 ```
 
 (`pip install git+https://github.com/davidlifschitz/conductor` works too.)
@@ -32,7 +59,7 @@ conductor-report --days 7      # retro analysis
 ```bash
 git clone https://github.com/davidlifschitz/conductor && cd conductor
 uv sync
-uv run conductor-proxy         # or: uv run uvicorn conductor.proxy:app --port 8484
+uv run conductor start --open
 ```
 
 ## Point a harness at it
